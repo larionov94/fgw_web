@@ -1,0 +1,1 @@
+# Finish Goods Warehouse (Склад готовой продукции).
