@@ -29,7 +29,7 @@ func NewServer(addr string, handler http.Handler, logger *common.Logger) *Server
 
 // StartServer запускает HTTP сервер и блокирует, пока он в работе.
 func (s *Server) StartServer(ctx context.Context) error {
-	s.logger.LogI(msg.I2100)
+	s.logger.LogI(msg.I2100 + s.httpServer.Addr)
 	errCh := make(chan error, 1)
 
 	go func() {

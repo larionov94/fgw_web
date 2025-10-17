@@ -5,11 +5,10 @@ import (
 	"FGW_WEB/pkg/common/msg"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/joho/godotenv"
 )
-
-const fileEnv = ".env"
 
 type MSSQLEntryCfg struct {
 	Driver  string `env:"driver"`
@@ -25,17 +24,10 @@ type MSSQLCfg struct {
 	logger *common.Logger
 }
 
-func NewMSSQLCfg(logger *common.Logger) (*MSSQLCfg, error) {
-	if err := loadEnvFile(); err != nil {
+func NewMSSQLCfg(logger *common.Logger, pathFile string) (*MSSQLCfg, error) {
+	if err := loadEnvFile(pathFile); err != nil {
 		return nil, err
 	}
-
-	fmt.Println(os.Getenv("MSSQL_DRIVER"))
-	fmt.Println(os.Getenv("MSSQL_SERVER"))
-	fmt.Println(os.Getenv("MSSQL_NAME"))
-	fmt.Println(os.Getenv("MSSQL_USER"))
-	fmt.Println(os.Getenv("MSSQL_PASSWD"))
-	fmt.Println(os.Getenv("MSSQL_CHARSET"))
 
 	return &MSSQLCfg{
 		MSSQL: MSSQLEntryCfg{
@@ -50,9 +42,9 @@ func NewMSSQLCfg(logger *common.Logger) (*MSSQLCfg, error) {
 	}, nil
 }
 
-func loadEnvFile() error {
-	//envPath := filepath.Join(fileEnv)
-	err := godotenv.Load(".env")
+func loadEnvFile(pathFile string) error {
+	envPath := filepath.Join(pathFile)
+	err := godotenv.Load(envPath)
 	if err != nil {
 		return fmt.Errorf("%s: %w", msg.E3003, err)
 	}

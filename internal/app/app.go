@@ -15,6 +15,7 @@ import (
 )
 
 const addr = ":7777"
+const fileEnv = ".env"
 
 func StartApp() {
 	logger, err := common.NewLogger("")
@@ -23,7 +24,7 @@ func StartApp() {
 	}
 	defer logger.Close()
 
-	configDB, err := config.NewMSSQLCfg(logger)
+	configDB, err := config.NewMSSQLCfg(logger, fileEnv)
 	if err != nil {
 		logger.LogE(msg.E3000, err)
 	}

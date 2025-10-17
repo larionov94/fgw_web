@@ -10,19 +10,18 @@ import (
 	"log"
 	"time"
 
-	_ "github.com/alexbrainman/odbc"
+	_ "github.com/microsoft/go-mssqldb"
 )
 
 func NewConnMSSQL(ctx context.Context, configDB *config.MSSQLCfg, logger *common.Logger) (*sql.DB, error) {
-	dataSourceName := fmt.Sprintf("Driver=%s; Server=%s; Database=%s; Uid=%s; Pwd=%s; ClientCharset=%s;",
+	dataSourceName := fmt.Sprintf("%s://%s:%s@%s?database=%s&charset=%s",
 		configDB.MSSQL.Driver,
-		configDB.MSSQL.Server,
-		configDB.MSSQL.Name,
 		configDB.MSSQL.User,
 		configDB.MSSQL.Passwd,
+		configDB.MSSQL.Server,
+		configDB.MSSQL.Name,
 		configDB.MSSQL.Charset)
-
-	db, err := sql.Open("odbc", dataSourceName)
+	db, err := sql.Open("mssql", dataSourceName)
 	if err != nil {
 		logger.LogE(msg.E3200, err)
 
