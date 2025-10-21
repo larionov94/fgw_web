@@ -8,7 +8,7 @@ CREATE TABLE dbo.svRoles
 
 CREATE INDEX idx_svRoles_id ON dbo.svRoles (id);
 
-CREATE PROCEDURE dbo.svGetRoles -- Процедура получения всех ролей.
+CREATE PROCEDURE dbo.svAllRoles -- Процедура получения всех ролей.
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -37,7 +37,7 @@ BEGIN
 END
 GO;
 
-CREATE PROCEDURE dbo.svGetRoleDeleteById -- Процедура удаления роли по id.
+CREATE PROCEDURE dbo.svDelRoleById -- Процедура удаления роли по id.
     @id INT -- id роли.
 AS
 BEGIN
