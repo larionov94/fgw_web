@@ -54,8 +54,8 @@ BEGIN
     SET NOCOUNT ON;
 
     UPDATE dbo.svPerformers
-    SET id_role = 0
-    WHERE id_role NOT IN (SELECT id FROM dbo.svRoles); -- id_role = 0, если роли нет в таблице svRoles.
+    SET id_role_a_fgw = 0
+    WHERE id_role_a_fgw NOT IN (SELECT id FROM dbo.svRoles); -- id_role = 0, если роли нет в таблице svRoles.
 END
 GO;
 
@@ -79,6 +79,10 @@ INSERT INTO dbo.svRoles
 VALUES (2, 'supervisor', N'Руководитель доступ к CRUD операциям с продукцией и редактированию данных');
 INSERT INTO dbo.svRoles
 VALUES (3, 'administrator', N'Администратор доступ ко всем операциям');
+INSERT INTO dbo.svRoles
+VALUES (4, 'test', N'Тестовые операции для проверки работоспособности');
+INSERT INTO dbo.svRoles
+VALUES (5, 'operator', N'Диспетчер заводит сменно-суточное задание');
 
 -- exec dbo.svGetRoles;
 -- exec dbo.svGetRoleById 1;
