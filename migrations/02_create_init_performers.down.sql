@@ -1,5 +1,6 @@
 DROP TABLE dbo.svPerformers;
-DROP PROCEDURE dbo.svAllPerformers;
-DROP PROCEDURE dbo.svGetPerformerById;
-DROP PROCEDURE dbo.svGetPerformerByIdRoleFGW;
-DROP PROCEDURE dbo.svGetPerformerByIdRoleAForms;
+DROP PROCEDURE dbo.svPerformerAll;
+DROP PROCEDURE dbo.svPerformerAuth;
+DROP PROCEDURE dbo.svPerformerFindById;
+DROP PROCEDURE dbo.svPerformerUpdById;
+DROP PROCEDURE dbo.svPerformerExistsById;

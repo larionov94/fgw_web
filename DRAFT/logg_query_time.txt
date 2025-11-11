@@ -1,0 +1,56 @@
+package repository
+
+import (
+    "context"
+    "database/sql"
+    "time"
+    "log"
+)
+
+type PerformerRepository struct {
+    db *sql.DB
+}
+
+func (r *PerformerRepository) FindByBC(ctx context.Context, bc string) (*Performer, error) {
+    start := time.Now()
+
+    query := `
+        SELECT id, fio, bc, pass_hash, archive, id_role_a_forms, id_role_a_fgw,
+               created_at, created_by, updated_at, updated_by
+        FROM dbo.svPerformers
+        WHERE bc = @bc AND archive = 0
+    `
+
+    var performer Performer
+    err := r.db.QueryRowContext(ctx, query, sql.Named("bc", bc)).Scan(
+        &performer.ID, &performer.FIO, &performer.BC, &performer.PassHash,
+        &performer.Archive, &performer.IDRoleAForms, &performer.IDRoleAFgw,
+        &performer.CreatedAt, &performer.CreatedBy, &performer.UpdatedAt, &performer.UpdatedBy,
+    )
+
+    // Логируем медленные запросы
+    if duration := time.Since(start); duration > 100*time.Millisecond {
+        log.Printf("SLOW QUERY: FindByBC took %v", duration)
+    }
+
+    return &performer, err
+}
+
+// Отчеты - потенциально медленные операции
+func (r *PerformerRepository) GetPerformersByRole(ctx context.Context, roleID int, page, pageSize int) ([]Performer, error) {
+    query := `
+        SELECT id, fio, bc, created_at
+        FROM dbo.svPerformers
+        WHERE id_role_a_forms = @roleID
+          AND archive = 0
+        ORDER BY created_at DESC
+        OFFSET @offset ROWS
+        FETCH NEXT @pageSize ROWS ONLY
+    `
+
+    // Этот запрос выиграет от индекса: IX_svPerformers_role_forms
+    // CREATE INDEX IX_svPerformers_role_forms ON dbo.svPerformers(id_role_a_forms, archive, created_at)
+    // INCLUDE (fio, bc)
+
+    // ... implementation
+}

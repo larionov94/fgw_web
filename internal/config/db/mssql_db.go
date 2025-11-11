@@ -53,3 +53,10 @@ func Close(db *sql.DB) {
 	}
 	log.Printf(msg.I2200)
 }
+
+func RowsClose(rows *sql.Rows) {
+	if err := rows.Close(); err != nil {
+		log.Printf("%s: %v", msg.E3203, err)
+	}
+	log.Printf(msg.I2201)
+}
