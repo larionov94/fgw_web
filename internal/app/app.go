@@ -3,6 +3,9 @@ package app
 import (
 	"FGW_WEB/internal/config"
 	"FGW_WEB/internal/config/db"
+	"FGW_WEB/internal/handler/json_api"
+	"FGW_WEB/internal/repository"
+	"FGW_WEB/internal/service"
 	"FGW_WEB/pkg/common"
 	"FGW_WEB/pkg/common/msg"
 	"context"
@@ -38,9 +41,13 @@ func StartApp() {
 	}
 	defer db.Close(mssqlDB)
 
+	repoPerformer := repository.NewPerformerRepo(mssqlDB, logger)
+	servicePerformer := service.NewPerformerService(repoPerformer, logger)
+	handlerPerformerJSON := json_api.NewPerformerHandlerJSON(servicePerformer, logger)
+
 	mux := http.NewServeMux()
 
-	// TODO: Реализовать роутинг
+	handlerPerformerJSON.ServeHTTPJSONRouter(mux)
 
 	server := config.NewServer(addr, mux, logger)
 

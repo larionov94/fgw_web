@@ -1,7 +1,7 @@
-package model
+package dto
 
-// Audit аудит для отслеживания изменений данных.
-type Audit struct {
+// AuditDTO аудит для отслеживания изменений данных.
+type AuditDTO struct {
 	CreatedAt string // CreatedAt - дата создания записи.
 	CreatedBy int    // CreatedBy - табельный номер сотрудника.
 	UpdatedAt string // UpdatedAt - дата изменения записи.

@@ -50,16 +50,15 @@ func (p *PerformerRepo) All(ctx context.Context) ([]model.Performer, error) {
 			&performer.Archive,
 			&performer.IdRoleAForms,
 			&performer.IdRoleAFGW,
-			&performer.AuditRec.CreatedBy,
 			&performer.AuditRec.CreatedAt,
-			&performer.AuditRec.UpdatedBy,
+			&performer.AuditRec.CreatedBy,
 			&performer.AuditRec.UpdatedAt,
+			&performer.AuditRec.UpdatedBy,
 		); err != nil {
 			p.logg.LogE(msg.E3204, err)
 
 			return nil, fmt.Errorf("%s: %v", msg.E3204, err)
 		}
-		performer.FIO, _ = convert.Win1251ToUTF8(performer.FIO)
 
 		performers = append(performers, performer)
 	}
@@ -77,9 +76,7 @@ func (p *PerformerRepo) All(ctx context.Context) ([]model.Performer, error) {
 func (p *PerformerRepo) AuthByIdAndPass(ctx context.Context, id int, password string) (bool, error) {
 	var authSuccess bool
 
-	err := p.mssql.QueryRowContext(ctx, FGWsvPerformerAuthQuery,
-		sql.Named("id", id),
-		sql.Named("pass", password)).Scan(&authSuccess)
+	err := p.mssql.QueryRowContext(ctx, FGWsvPerformerAuthQuery, id, password).Scan(&authSuccess)
 	if err != nil {
 		p.logg.LogE(msg.E3202, err)
 
@@ -93,7 +90,7 @@ func (p *PerformerRepo) AuthByIdAndPass(ctx context.Context, id int, password st
 func (p *PerformerRepo) FindById(ctx context.Context, id int) (*model.Performer, error) {
 	var performer model.Performer
 
-	if err := p.mssql.QueryRowContext(ctx, FGWsvPerformerFindByIdQuery, sql.Named("id", id)).Scan(
+	if err := p.mssql.QueryRowContext(ctx, FGWsvPerformerFindByIdQuery, id).Scan(
 		&performer.Id,
 		&performer.FIO,
 		&performer.BC,
@@ -101,10 +98,10 @@ func (p *PerformerRepo) FindById(ctx context.Context, id int) (*model.Performer,
 		&performer.Archive,
 		&performer.IdRoleAForms,
 		&performer.IdRoleAFGW,
-		&performer.AuditRec.CreatedBy,
 		&performer.AuditRec.CreatedAt,
-		&performer.AuditRec.UpdatedBy,
+		&performer.AuditRec.CreatedBy,
 		&performer.AuditRec.UpdatedAt,
+		&performer.AuditRec.UpdatedBy,
 	); err != nil {
 		p.logg.LogE(msg.E3202, err)
 
@@ -121,12 +118,8 @@ func (p *PerformerRepo) FindById(ctx context.Context, id int) (*model.Performer,
 
 // UpdById обновить данные сотрудника по табельному номеру в БД.
 func (p *PerformerRepo) UpdById(ctx context.Context, id int, performer *model.Performer) error {
-	result, err := p.mssql.ExecContext(ctx, FGWsvPerformerUpdByIdQuery,
-		sql.Named("id", id),
-		sql.Named("id_role_a_forms", performer.IdRoleAForms),
-		sql.Named("id_role_a_fgw", performer.IdRoleAFGW),
-		sql.Named("updated_by", performer.AuditRec.UpdatedBy), // TODO: в поле updated_by - нужно подставить табельный номер авторизованного сотрудника.
-	)
+	result, err := p.mssql.ExecContext(ctx, FGWsvPerformerUpdByIdQuery, id, performer.IdRoleAForms,
+		performer.IdRoleAFGW, performer.AuditRec.UpdatedBy)
 	if err != nil {
 		p.logg.LogE(msg.E3202, err)
 
@@ -153,7 +146,7 @@ func (p *PerformerRepo) UpdById(ctx context.Context, id int, performer *model.Pe
 func (p *PerformerRepo) ExistById(ctx context.Context, id int) (bool, error) {
 	var exists bool
 
-	err := p.mssql.QueryRowContext(ctx, FGWsvPerformerExistsByIdQuery, sql.Named("id", id)).Scan(&exists)
+	err := p.mssql.QueryRowContext(ctx, FGWsvPerformerExistsByIdQuery, id).Scan(&exists)
 	if err != nil {
 		p.logg.LogE(msg.E3206, err)
 

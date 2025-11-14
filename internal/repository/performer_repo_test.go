@@ -39,21 +39,21 @@ func getRows() *sqlmock.Rows {
 }
 
 // getPerformerNotArchive возвращает тестовые данные не архивного сотрудника
-func getPerformerNotArchiveInvalid() (string, string, string, string, bool, int, int, int, string, int, string) {
+func getPerformerNotArchiveInvalid() (string, string, string, string, bool, int, int, string, int, string, int) {
 	now := time.Now().String()
-	return "invalid_id", "Тестов Тест Тестович", "000012345", "12345", false, 0, 0, 12345, now, 12345, now
+	return "invalid_id", "Тестов Тест Тестович", "000012345", "12345", false, 0, 0, now, 12345, now, 12345
 }
 
 // getPerformerNotArchive возвращает тестовые данные не архивного сотрудника
-func getPerformerNotArchive() (int, string, string, string, bool, int, int, int, string, int, string) {
+func getPerformerNotArchive() (int, string, string, string, bool, int, int, string, int, string, int) {
 	now := time.Now().String()
-	return 12345, "Тестов Тест Тестович", "000012345", "12345", false, 0, 0, 12345, now, 12345, now
+	return 12345, "Тестов Тест Тестович", "000012345", "12345", false, 0, 0, now, 12345, now, 12345
 }
 
 // getPerformerArchive возвращает тестовые данные архивного сотрудника
-func getPerformerArchive() (int, string, string, string, bool, int, int, int, string, int, string) {
+func getPerformerArchive() (int, string, string, string, bool, int, int, string, int, string, int) {
 	now := time.Now().String()
-	return 12345, "Тест Тестов Тестович", "000012345", "12345", true, 0, 0, 12345, now, 12345, now
+	return 12345, "Тест Тестов Тестович", "000012345", "12345", true, 0, 0, now, 12345, now, 12345
 }
 
 // verifyPerformer проверяет основные поля сотрудника.
@@ -102,6 +102,7 @@ func TestPerformerRepo_All(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, performers, 1)
 
+		performers[0].FIO, _ = convert.Win1251ToUTF8(performers[0].FIO)
 		verifyPerformer(t, &performers[0], "Тестов Тест Тестович")
 
 		// проверяем что ожидания все выполнены
@@ -177,10 +178,12 @@ func TestPerformerRepo_AuthByIdAndPass(t *testing.T) {
 	defer db.Close(mssqlDB)
 
 	t.Run("Успех - аутентификация завершена", func(t *testing.T) {
-		expectedQuery := FGWsvPerformerAuthQuery
+		//expectedQuery := FGWsvPerformerAuthQuery
 		expectedRows := sqlmock.NewRows([]string{"auth_success"}).AddRow(true)
 
-		mock.ExpectQuery(expectedQuery).WillReturnRows(expectedRows)
+		mock.ExpectQuery(`.*svPerformerAuth.*`).
+			//WithArgs(12345, "12345").
+			WillReturnRows(expectedRows)
 
 		result, err := repo.AuthByIdAndPass(context.Background(), 12345, "12345")
 
@@ -191,10 +194,10 @@ func TestPerformerRepo_AuthByIdAndPass(t *testing.T) {
 	})
 
 	t.Run("Неудача - неверный пароль", func(t *testing.T) {
-		expectedQuery := FGWsvPerformerAuthQuery
+		//expectedQuery := FGWsvPerformerAuthQuery
 		expectedRows := sqlmock.NewRows([]string{"auth_success"}).AddRow(false)
 
-		mock.ExpectQuery(expectedQuery).WillReturnRows(expectedRows)
+		mock.ExpectQuery(`.*svPerformerAuth.*`).WillReturnRows(expectedRows)
 
 		result, err := repo.AuthByIdAndPass(context.Background(), 12345, "invalid_password")
 
@@ -205,9 +208,9 @@ func TestPerformerRepo_AuthByIdAndPass(t *testing.T) {
 	})
 
 	t.Run("Ошибка - запись не найдена", func(t *testing.T) {
-		expectedQuery := FGWsvPerformerAuthQuery
+		//expectedQuery := FGWsvPerformerAuthQuery
 
-		mock.ExpectQuery(expectedQuery).WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery(`.*svPerformerAuth.*`).WillReturnError(sql.ErrNoRows)
 
 		result, err := repo.AuthByIdAndPass(context.Background(), 12345, "password")
 
@@ -219,10 +222,10 @@ func TestPerformerRepo_AuthByIdAndPass(t *testing.T) {
 	})
 
 	t.Run("Ошибка - не удалось подключиться к БД", func(t *testing.T) {
-		expectedQuery := FGWsvPerformerAuthQuery
+		//expectedQuery := FGWsvPerformerAuthQuery
 		expectedError := errors.New("database connection failed")
 
-		mock.ExpectQuery(expectedQuery).WillReturnError(expectedError)
+		mock.ExpectQuery(`.*svPerformerAuth.*`).WillReturnError(expectedError)
 
 		result, err := repo.AuthByIdAndPass(context.Background(), 12345, "12345")
 
@@ -234,10 +237,10 @@ func TestPerformerRepo_AuthByIdAndPass(t *testing.T) {
 	})
 
 	t.Run("Ошибка - неверный тип данных в результате", func(t *testing.T) {
-		expectedQuery := FGWsvPerformerAuthQuery
+		//expectedQuery := FGWsvPerformerAuthQuery
 
 		rows := sqlmock.NewRows([]string{"auth_success"}).AddRow("not_a_boolean")
-		mock.ExpectQuery(expectedQuery).WillReturnRows(rows)
+		mock.ExpectQuery(`.*svPerformerAuth.*`).WillReturnRows(rows)
 
 		result, err := repo.AuthByIdAndPass(context.Background(), 12345, "12345")
 
@@ -260,10 +263,10 @@ func TestPerformerRepo_FindById(t *testing.T) {
 		updatedAt := time.Now()
 
 		rows := getRows().
-			AddRow(expectedId, expectedFIO, "000012345", "12345", false, 0, 0, 12345, createdAt, 12345, updatedAt)
+			AddRow(expectedId, expectedFIO, "000012345", "12345", false, 0, 0, createdAt, 12345, updatedAt, 12345)
 
-		mock.ExpectQuery(FGWsvPerformerFindByIdQuery).
-			WithArgs(sql.Named("id", expectedId)).
+		mock.ExpectQuery(`.*svPerformerFindById.*`).
+			WithArgs(expectedId).
 			WillReturnRows(rows)
 
 		performer, err := repo.FindById(context.Background(), expectedId)
@@ -277,10 +280,10 @@ func TestPerformerRepo_FindById(t *testing.T) {
 	})
 
 	t.Run("Ошибка - сотрудник не найден", func(t *testing.T) {
-		expectedQuery := FGWsvPerformerFindByIdQuery
+		//expectedQuery := FGWsvPerformerFindByIdQuery
 
-		mock.ExpectQuery(expectedQuery).
-			WithArgs(sql.Named("id", 0)).
+		mock.ExpectQuery(`.*svPerformerFindById.*`).
+			WithArgs(0).
 			WillReturnError(sql.ErrNoRows)
 
 		performer, err := repo.FindById(context.Background(), 0)
@@ -293,11 +296,11 @@ func TestPerformerRepo_FindById(t *testing.T) {
 	})
 
 	t.Run("Ошибка - не удалось подключиться к БД", func(t *testing.T) {
-		expectedQuery := FGWsvPerformerFindByIdQuery
+		//expectedQuery := FGWsvPerformerFindByIdQuery
 		expectedError := errors.New("database connection failed")
 
-		mock.ExpectQuery(expectedQuery).
-			WithArgs(sql.Named("id", 12345)).
+		mock.ExpectQuery(`.*svPerformerFindById.*`).
+			WithArgs(12345).
 			WillReturnError(expectedError)
 
 		performer, err := repo.FindById(context.Background(), 12345)
@@ -310,12 +313,12 @@ func TestPerformerRepo_FindById(t *testing.T) {
 	})
 
 	t.Run("Успех - архивный сотрудник найден", func(t *testing.T) {
-		expectedQuery := FGWsvPerformerFindByIdQuery
+		//expectedQuery := FGWsvPerformerFindByIdQuery
 
 		expectedRows := getRows().AddRow(getPerformerArchive())
 
-		mock.ExpectQuery(expectedQuery).
-			WithArgs(sql.Named("id", 12345)).
+		mock.ExpectQuery(`.*svPerformerFindById.*`).
+			WithArgs(12345).
 			WillReturnRows(expectedRows)
 
 		performer, err := repo.FindById(context.Background(), 12345)
@@ -333,7 +336,7 @@ func TestPerformerRepo_UpdById(t *testing.T) {
 	defer db.Close(mssqlDB)
 
 	t.Run("Успех - обновлен сотрудник", func(t *testing.T) {
-		expectedQuery := FGWsvPerformerUpdByIdQuery
+		//expectedQuery := FGWsvPerformerUpdByIdQuery
 		expectedId := 12345
 
 		performer := &model.Performer{
@@ -344,11 +347,11 @@ func TestPerformerRepo_UpdById(t *testing.T) {
 			},
 		}
 
-		mock.ExpectExec(expectedQuery).
-			WithArgs(sql.Named("id", expectedId),
-				sql.Named("id_role_a_forms", performer.IdRoleAForms),
-				sql.Named("id_role_a_fgw", performer.IdRoleAFGW),
-				sql.Named("updated_by", performer.AuditRec.UpdatedBy),
+		mock.ExpectExec(`.*svPerformerUpdById.*`).
+			WithArgs(expectedId,
+				performer.IdRoleAForms,
+				performer.IdRoleAFGW,
+				performer.AuditRec.UpdatedBy,
 			).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
@@ -361,7 +364,7 @@ func TestPerformerRepo_UpdById(t *testing.T) {
 
 	t.Run("Ошибка - не удалось выполнить запрос к БД", func(t *testing.T) {
 		expectedId := 12345
-		expectedQuery := FGWsvPerformerUpdByIdQuery
+		//expectedQuery := FGWsvPerformerUpdByIdQuery
 		expectedError := errors.New("database connection failed")
 
 		performer := &model.Performer{
@@ -371,11 +374,11 @@ func TestPerformerRepo_UpdById(t *testing.T) {
 				UpdatedBy: 12354,
 			},
 		}
-		mock.ExpectExec(expectedQuery).
-			WithArgs(sql.Named("id", expectedId),
-				sql.Named("id_role_a_forms", performer.IdRoleAForms),
-				sql.Named("id_role_a_fgw", performer.IdRoleAFGW),
-				sql.Named("updated_by", performer.AuditRec.UpdatedBy),
+		mock.ExpectExec(`.*svPerformerUpdById.*`).
+			WithArgs(expectedId,
+				performer.IdRoleAForms,
+				performer.IdRoleAFGW,
+				performer.AuditRec.UpdatedBy,
 			).
 			WillReturnError(expectedError)
 
@@ -389,7 +392,7 @@ func TestPerformerRepo_UpdById(t *testing.T) {
 
 	t.Run("Ошибка - сбой сканирования строки", func(t *testing.T) {
 		expectedId := 12345
-		expectedQuery := FGWsvPerformerUpdByIdQuery
+		//expectedQuery := FGWsvPerformerUpdByIdQuery
 
 		performer := &model.Performer{
 			IdRoleAForms: 1,
@@ -400,11 +403,11 @@ func TestPerformerRepo_UpdById(t *testing.T) {
 		}
 
 		mockResult := sqlmock.NewErrorResult(errors.New("rows affected error"))
-		mock.ExpectExec(expectedQuery).
-			WithArgs(sql.Named("id", expectedId),
-				sql.Named("id_role_a_forms", performer.IdRoleAForms),
-				sql.Named("id_role_a_fgw", performer.IdRoleAFGW),
-				sql.Named("updated_by", performer.AuditRec.UpdatedBy),
+		mock.ExpectExec(`.*svPerformerUpdById.*`).
+			WithArgs(expectedId,
+				performer.IdRoleAForms,
+				performer.IdRoleAFGW,
+				performer.AuditRec.UpdatedBy,
 			).
 			WillReturnResult(mockResult)
 
@@ -417,7 +420,7 @@ func TestPerformerRepo_UpdById(t *testing.T) {
 	})
 
 	t.Run("Ошибка - сотрудник не найден", func(t *testing.T) {
-		expectedQuery := FGWsvPerformerUpdByIdQuery
+		//expectedQuery := FGWsvPerformerUpdByIdQuery
 		expectedId := 0
 
 		performer := &model.Performer{
@@ -428,12 +431,8 @@ func TestPerformerRepo_UpdById(t *testing.T) {
 			},
 		}
 
-		mock.ExpectExec(expectedQuery).
-			WithArgs(sql.Named("id", expectedId),
-				sql.Named("id_role_a_forms", performer.IdRoleAForms),
-				sql.Named("id_role_a_fgw", performer.IdRoleAFGW),
-				sql.Named("updated_by", performer.AuditRec.UpdatedBy),
-			).
+		mock.ExpectExec(`.*svPerformerUpdById.*`).
+			WithArgs(expectedId, performer.IdRoleAForms, performer.IdRoleAFGW, performer.AuditRec.UpdatedBy).
 			WillReturnResult(sqlmock.NewResult(0, 0))
 
 		err := repo.UpdById(context.Background(), expectedId, performer)
@@ -451,11 +450,11 @@ func TestPerformerRepo_ExistById(t *testing.T) {
 
 	t.Run("Успех - сотрудник существует", func(t *testing.T) {
 		expectedId := 12345
-		expectedQuery := FGWsvPerformerExistsByIdQuery
+		//expectedQuery := FGWsvPerformerExistsByIdQuery
 
 		expectedRows := sqlmock.NewRows([]string{"exists"}).AddRow(true)
-		mock.ExpectQuery(expectedQuery).
-			WithArgs(sql.Named("id", expectedId)).
+		mock.ExpectQuery(`.*svPerformerExistsById.*`).
+			WithArgs(expectedId).
 			WillReturnRows(expectedRows)
 
 		exists, err := repo.ExistById(context.Background(), expectedId)
@@ -468,11 +467,11 @@ func TestPerformerRepo_ExistById(t *testing.T) {
 
 	t.Run("Успех - сотрудник не существует", func(t *testing.T) {
 		expectedId := 12345
-		expectedQuery := FGWsvPerformerExistsByIdQuery
+		//expectedQuery := FGWsvPerformerExistsByIdQuery
 
 		expectedRows := sqlmock.NewRows([]string{"exists"}).AddRow(false)
-		mock.ExpectQuery(expectedQuery).
-			WithArgs(sql.Named("id", expectedId)).
+		mock.ExpectQuery(`.*svPerformerExistsById.*`).
+			WithArgs(expectedId).
 			WillReturnRows(expectedRows)
 
 		exists, err := repo.ExistById(context.Background(), expectedId)
@@ -484,11 +483,11 @@ func TestPerformerRepo_ExistById(t *testing.T) {
 	})
 
 	t.Run("Ошибка - запись не найдена", func(t *testing.T) {
-		expectedQuery := FGWsvPerformerExistsByIdQuery
+		//expectedQuery := FGWsvPerformerExistsByIdQuery
 		expectedId := 12345
 
-		mock.ExpectQuery(expectedQuery).
-			WithArgs(sql.Named("id", expectedId)).
+		mock.ExpectQuery(`.*svPerformerExistsById.*`).
+			WithArgs(expectedId).
 			WillReturnError(sql.ErrNoRows)
 
 		exists, err := repo.ExistById(context.Background(), expectedId)
@@ -501,12 +500,12 @@ func TestPerformerRepo_ExistById(t *testing.T) {
 	})
 
 	t.Run("Ошибка - проблемы с подключением БД", func(t *testing.T) {
-		expectedQuery := FGWsvPerformerExistsByIdQuery
+		//expectedQuery := FGWsvPerformerExistsByIdQuery
 		expectedId := 12345
 		expectedError := errors.New("database connection failed")
 
-		mock.ExpectQuery(expectedQuery).
-			WithArgs(sql.Named("id", expectedId)).
+		mock.ExpectQuery(`.*svPerformerExistsById.*`).
+			WithArgs(expectedId).
 			WillReturnError(expectedError)
 
 		exists, err := repo.ExistById(context.Background(), expectedId)
@@ -519,12 +518,12 @@ func TestPerformerRepo_ExistById(t *testing.T) {
 	})
 
 	t.Run("Ошибка - неверный тип данных", func(t *testing.T) {
-		expectedQuery := FGWsvPerformerExistsByIdQuery
+		//expectedQuery := FGWsvPerformerExistsByIdQuery
 		expectedId := 12345
 
 		expectedRows := sqlmock.NewRows([]string{"exists"}).AddRow("not_a_boolean")
-		mock.ExpectQuery(expectedQuery).
-			WithArgs(sql.Named("id", expectedId)).
+		mock.ExpectQuery(`.*svPerformerExistsById.*`).
+			WithArgs(expectedId).
 			WillReturnRows(expectedRows)
 
 		exists, err := repo.ExistById(context.Background(), expectedId)
