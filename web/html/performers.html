@@ -17,6 +17,7 @@
             <th>ID</th>
             <th>ФИО</th>
             <th>Код доступа</th>
+            <th>Пароль</th>
             <th>Роль Forms</th>
             <th>Роль FGW</th>
             <th>Статус</th>
@@ -32,15 +33,16 @@
             <td>{{.Id}}</td>
             <td>{{.FIO}}</td>
             <td>{{.BC}}</td>
+            <td>{{.Pass}}</td>
             <td>{{.IdRoleAForms}}</td>
             <td>{{.IdRoleAFGW}}</td>
             <td class="{{if .Archive}}status-archive{{else}}status-active{{end}}">
                 {{if .Archive}}Архивный{{else}}Активный{{end}}
             </td>
-            <td>{{formatDateTime .Audit.CreatedAt}}</td>
-            <td>{{ .Audit.CreatedBy}}</td>
-            <td>{{formatDateTime .Audit.UpdatedAt}}</td>
-            <td>{{ .Audit.UpdatedBy}}</td>
+            <td>{{formatDateTime .AuditRec.CreatedAt}}</td>
+            <td>{{ .AuditRec.CreatedBy}}</td>
+            <td>{{formatDateTime .AuditRec.UpdatedAt}}</td>
+            <td>{{ .AuditRec.UpdatedBy}}</td>
         </tr>
         {{end}}
         </tbody>

@@ -2,8 +2,8 @@ package http_web
 
 import (
 	"FGW_WEB/internal/handler/http_err"
+	"FGW_WEB/internal/model"
 	"FGW_WEB/internal/service"
-	"FGW_WEB/internal/service/dto"
 	"FGW_WEB/pkg/common"
 	"FGW_WEB/pkg/common/msg"
 	"FGW_WEB/pkg/convert"
@@ -49,7 +49,7 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 
 	data := struct {
 		Title      string
-		Performers []dto.PerformerDTO
+		Performers []model.Performer
 	}{
 		Title:      "Список сотрудников",
 		Performers: performers,

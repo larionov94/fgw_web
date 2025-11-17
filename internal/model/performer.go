@@ -1,7 +1,7 @@
 package model
 
 type PerformerList struct {
-	Performers *[]PerformerList
+	Performers []Performer
 }
 
 type Performer struct {

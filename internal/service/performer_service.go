@@ -3,7 +3,6 @@ package service
 import (
 	"FGW_WEB/internal/model"
 	"FGW_WEB/internal/repository"
-	"FGW_WEB/internal/service/dto"
 	"FGW_WEB/pkg/common"
 	"FGW_WEB/pkg/common/msg"
 	"context"
@@ -21,11 +20,11 @@ func NewPerformerService(performerRepo repository.PerformerRepository, logger *c
 }
 
 type PerformerUseCase interface {
-	GetAllPerformers(ctx context.Context) ([]dto.PerformerDTO, error)
+	GetAllPerformers(ctx context.Context) ([]model.Performer, error)
 	AuthPerformer(ctx context.Context, id int, password string) (*model.AuthPerformer, error)
 }
 
-func (p *PerformerService) GetAllPerformers(ctx context.Context) ([]dto.PerformerDTO, error) {
+func (p *PerformerService) GetAllPerformers(ctx context.Context) ([]model.Performer, error) {
 	performers, err := p.performerRepo.All(ctx)
 	if err != nil {
 		p.logg.LogE(msg.E3209, err)
@@ -33,12 +32,7 @@ func (p *PerformerService) GetAllPerformers(ctx context.Context) ([]dto.Performe
 		return nil, fmt.Errorf("%s: %v", msg.E3209, err)
 	}
 
-	var performersDTO []dto.PerformerDTO
-	for _, performer := range performers {
-		performersDTO = append(performersDTO, p.toPerformerDTO(performer))
-	}
-
-	return performersDTO, nil
+	return performers, nil
 }
 
 func (p *PerformerService) AuthPerformer(ctx context.Context, id int, password string) (*model.AuthPerformer, error) {
@@ -65,21 +59,4 @@ func (p *PerformerService) AuthPerformer(ctx context.Context, id int, password s
 		Performer: *performer,
 		Message:   "Успешный вход",
 	}, nil
-}
-
-func (p *PerformerService) toPerformerDTO(performer model.Performer) dto.PerformerDTO {
-	return dto.PerformerDTO{
-		Id:           performer.Id,
-		FIO:          performer.FIO,
-		BC:           performer.BC,
-		Archive:      performer.Archive,
-		IdRoleAForms: performer.IdRoleAForms,
-		IdRoleAFGW:   performer.IdRoleAFGW,
-		Audit: dto.AuditDTO(model.Audit{
-			CreatedAt: performer.AuditRec.CreatedAt,
-			CreatedBy: 6680,
-			UpdatedAt: performer.AuditRec.UpdatedAt,
-			UpdatedBy: 6680,
-		}),
-	}
 }

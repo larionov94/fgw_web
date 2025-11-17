@@ -2,8 +2,8 @@ package json_api
 
 import (
 	"FGW_WEB/internal/handler/json_err"
+	"FGW_WEB/internal/model"
 	"FGW_WEB/internal/service"
-	"FGW_WEB/internal/service/dto"
 	"FGW_WEB/pkg/common"
 	"FGW_WEB/pkg/common/msg"
 	"encoding/json"
@@ -42,14 +42,14 @@ func (p *PerformerHandlerJSON) AllPerformersJSON(w http.ResponseWriter, r *http.
 
 	if len(performers) == 0 {
 		w.WriteHeader(http.StatusNoContent)
-		if err = json.NewEncoder(w).Encode(&dto.PerformerDTOList{Performers: []dto.PerformerDTO{}}); err != nil {
+		if err = json.NewEncoder(w).Encode(&model.PerformerList{Performers: []model.Performer{}}); err != nil {
 			return
 		}
 	}
 
-	data := dto.PerformerDTOList{Performers: performers}
+	data := model.PerformerList{Performers: performers}
 
-	if err = json.NewEncoder(w).Encode(data); err != nil {
+	if err = json.NewEncoder(w).Encode(&data); err != nil {
 		json_err.SendErrorResponse(w, http.StatusInternalServerError, msg.H7001, r)
 
 		return
