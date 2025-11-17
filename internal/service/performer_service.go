@@ -22,7 +22,7 @@ func NewPerformerService(performerRepo repository.PerformerRepository, logger *c
 
 type PerformerUseCase interface {
 	GetAllPerformers(ctx context.Context) ([]dto.PerformerDTO, error)
-	AuthPerformer(ctx context.Context, id int, password string) (*dto.AuthPerformerDTO, error)
+	AuthPerformer(ctx context.Context, id int, password string) (*model.AuthPerformer, error)
 }
 
 func (p *PerformerService) GetAllPerformers(ctx context.Context) ([]dto.PerformerDTO, error) {
@@ -41,28 +41,28 @@ func (p *PerformerService) GetAllPerformers(ctx context.Context) ([]dto.Performe
 	return performersDTO, nil
 }
 
-func (p *PerformerService) AuthPerformer(ctx context.Context, id int, password string) (*dto.AuthPerformerDTO, error) {
+func (p *PerformerService) AuthPerformer(ctx context.Context, id int, password string) (*model.AuthPerformer, error) {
 	if id <= 0 || password == "" {
 		p.logg.LogE(msg.E3211, nil)
 
-		return &dto.AuthPerformerDTO{Success: false, Message: msg.E3211}, errors.New("ТН или пароль не должны быть пустыми")
+		return &model.AuthPerformer{Success: false, Message: msg.E3211}, errors.New("ТН или пароль не должны быть пустыми")
 	}
 
 	authOK, err := p.performerRepo.AuthByIdAndPass(ctx, id, password)
 	if err != nil || !authOK {
 		p.logg.LogE(msg.E3210, err)
 
-		return &dto.AuthPerformerDTO{Success: false, Message: msg.E3210 + " AuthPerformer.AuthByIdAndPass()"}, err
+		return &model.AuthPerformer{Success: false, Message: msg.E3210 + " AuthPerformer.AuthByIdAndPass()"}, err
 	}
 
 	performer, err := p.performerRepo.FindById(ctx, id)
 	if err != nil {
-		return &dto.AuthPerformerDTO{Success: false, Message: msg.E3212 + "AuthPerformer.FindById"}, err
+		return &model.AuthPerformer{Success: false, Message: msg.E3212 + "AuthPerformer.FindById"}, err
 	}
 
-	return &dto.AuthPerformerDTO{
+	return &model.AuthPerformer{
 		Success:   true,
-		Performer: p.toPerformerDTO(*performer),
+		Performer: *performer,
 		Message:   "Успешный вход",
 	}, nil
 }

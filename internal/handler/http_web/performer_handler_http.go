@@ -28,6 +28,7 @@ func NewPerformerHandlerHTML(performerService service.PerformerUseCase, logg *co
 
 func (p *PerformerHandlerHTML) ServeHTTPHTMLRouter(mux *http.ServeMux) {
 	mux.HandleFunc("/fgw/performers", p.AllPerformersHTML)
+	mux.HandleFunc("/fgw/login", p.AuthPerformerHTML)
 }
 
 func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.Request) {
@@ -55,6 +56,32 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 	}
 
 	p.renderPage(w, tmplPerformersHTML, data, r)
+}
+
+func (p *PerformerHandlerHTML) AuthPerformerHTML(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	if r.Method != http.MethodPost {
+		http_err.WriteMethodNotAllowed(w, r, p.logg, msg.H7000, "")
+
+		return
+	}
+
+	//performers, err := p.performerService.GetAllPerformerAuth(r.Context())
+	//if err != nil {
+	//	http_err.WriteServerError(w, r, p.logg, msg.H7001, err.Error())
+	//
+	//	return
+	//}
+
+	//performerId := convert.ParseFormFieldInt(r,"id")
+	//performerPass := r.FormValue("pass")
+
+	//for _, performer := range performers {
+	//	if performer.Id == performerId && performer.Pass == performerPass {
+	//
+	//	}
+	//}
 }
 
 func (p *PerformerHandlerHTML) renderErrorPage(w http.ResponseWriter, statusCode int, msgCode string, r *http.Request) {

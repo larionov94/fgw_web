@@ -152,7 +152,7 @@ func (l *Logger) createMessage(msg string, errStr *string) MessageEntry {
 
 // createDetails создает и заполняет информацию о месте вызова.
 func (l *Logger) createDetails() *DetailEntry {
-	funcName, fileName, lineNumber, filePath := fileWithFuncAndLineNum()
+	funcName, fileName, lineNumber, filePath := FileWithFuncAndLineNum(SkipNumOfStackFrame)
 	return &DetailEntry{
 		FunctionName: funcName,
 		FileName:     fileName,
@@ -171,10 +171,14 @@ func splitCodeMessage(msg string) (string, string) {
 	return msg[:CodeLength-1], msg[CodeLength:]
 }
 
-// fileWithFuncAndLineNum возвращает имя функции, имя файла, номер строки, путь файла.
-func fileWithFuncAndLineNum() (string, string, int, string) {
+//func FileWithFuncAndLineNumToString(skipNumOfStack int) string {
+//	return fmt.Sprintf(FileWithFuncAndLineNum(skipNumOfStack))
+//}
+
+// FileWithFuncAndLineNum возвращает имя функции, имя файла, номер строки, путь файла.
+func FileWithFuncAndLineNum(skipNumOfStack int) (string, string, int, string) {
 	pc := make([]uintptr, DefaultMaxStackFrames)
-	frameCount := runtime.Callers(SkipNumOfStackFrame, pc)
+	frameCount := runtime.Callers(skipNumOfStack, pc)
 	if frameCount == 0 {
 		return "неизвестно", "неизвестно", 0, ""
 	}

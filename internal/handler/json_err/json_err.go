@@ -4,8 +4,6 @@ import (
 	"FGW_WEB/pkg/common"
 	"encoding/json"
 	"net/http"
-	"runtime"
-	"strings"
 )
 
 const (
@@ -17,7 +15,7 @@ const (
 )
 
 func SendErrorResponse(w http.ResponseWriter, statusCode int, msgCode string, r *http.Request) {
-	funcName, fileName, lineNumber, filePath := fileWithFuncAndLineNum()
+	funcName, fileName, lineNumber, filePath := common.FileWithFuncAndLineNum(SkipNumOfStackFrame)
 
 	errorResponse := struct {
 		Error       string               `json:"error"`
@@ -46,23 +44,4 @@ func SendErrorResponse(w http.ResponseWriter, statusCode int, msgCode string, r 
 
 		return
 	}
-}
-
-// fileWithFuncAndLineNum возвращает имя функции, имя файла, номер строки, путь файла.
-func fileWithFuncAndLineNum() (string, string, int, string) {
-	pc := make([]uintptr, DefaultMaxStackFrames)
-	frameCount := runtime.Callers(SkipNumOfStackFrame, pc)
-	if frameCount == 0 {
-		return "неизвестно", "неизвестно", 0, ""
-	}
-
-	frames := runtime.CallersFrames(pc[:frameCount])
-	frame, ok := frames.Next()
-	if !ok {
-		return "неизвестно", "неизвестно", 0, ""
-	}
-
-	idxFile := strings.LastIndexByte(frame.File, '/')
-
-	return frame.Function, frame.File[idxFile+1:], frame.Line, frame.File
 }

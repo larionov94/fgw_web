@@ -150,19 +150,19 @@ func Test_fileWithFuncAndLineNum(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1, got2, got3 := fileWithFuncAndLineNum()
+			got, got1, got2, got3 := FileWithFuncAndLineNum(SkipNumOfStackFrame)
 
 			if got != tt.want {
-				t.Errorf("fileWithFuncAndLineNum() got = %v, want %v", got, tt.want)
+				t.Errorf("FileWithFuncAndLineNum() got = %v, want %v", got, tt.want)
 			}
 			if got1 != tt.want1 {
-				t.Errorf("fileWithFuncAndLineNum() got1 = %v, want %v", got1, tt.want1)
+				t.Errorf("FileWithFuncAndLineNum() got1 = %v, want %v", got1, tt.want1)
 			}
 			if got2 != tt.want2 {
-				t.Errorf("fileWithFuncAndLineNum() got2 = %v, want %v", got2, tt.want2)
+				t.Errorf("FileWithFuncAndLineNum() got2 = %v, want %v", got2, tt.want2)
 			}
 			if got3 != tt.want3 {
-				t.Errorf("fileWithFuncAndLineNum() got3 = %v, want %v", got3, tt.want3)
+				t.Errorf("FileWithFuncAndLineNum() got3 = %v, want %v", got3, tt.want3)
 			}
 		})
 
@@ -208,7 +208,7 @@ func Test_splitCodeMessage(t *testing.T) {
 func TestLogger_createEntry(t *testing.T) {
 	cleanupTestFiles(t)
 	t.Run("Успешно создан объект LogEntry", func(t *testing.T) {
-		funcName, fileName, lineNum, filePath := fileWithFuncAndLineNum()
+		funcName, fileName, lineNum, filePath := FileWithFuncAndLineNum(SkipNumOfStackFrame)
 		funcName = "main.TestWrite"
 		fileName = "logger_test.go"
 		lineNum = 16
