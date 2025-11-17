@@ -5,7 +5,6 @@ import (
 	"FGW_WEB/internal/model"
 	"FGW_WEB/pkg/common"
 	"FGW_WEB/pkg/common/msg"
-	"FGW_WEB/pkg/convert"
 	"context"
 	"database/sql"
 	"errors"
@@ -110,8 +109,6 @@ func (p *PerformerRepo) FindById(ctx context.Context, id int) (*model.Performer,
 		}
 		return nil, fmt.Errorf("%s: %v", msg.E3202, err)
 	}
-
-	performer.FIO, _ = convert.Win1251ToUTF8(performer.FIO)
 
 	return &performer, nil
 }

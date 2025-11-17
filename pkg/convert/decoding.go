@@ -19,6 +19,12 @@ func Win1251ToUTF8(str string) (string, error) {
 	return string(buf), nil
 }
 
+func FixEncoding(s string) (string, error) {
+	// Декодируем из Windows-1251 в UTF-8
+	decoder := charmap.Windows1251.NewDecoder()
+	return decoder.String(s)
+}
+
 // Win1251ToUTF8Map - ручная карта преобразования Windows-1251 → UTF-8
 func Win1251ToUTF81(s string) string {
 	win1251 := []byte(s)

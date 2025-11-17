@@ -83,5 +83,13 @@ func (p *PerformerHandlerJSON) AuthPerformerJSON(w http.ResponseWriter, r *http.
 		return
 	}
 
-	json.NewEncoder(w).Encode(result)
+	WriteJSON(w, result, r)
+}
+
+func WriteJSON(w http.ResponseWriter, v interface{}, r *http.Request) {
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		json_err.SendErrorResponse(w, http.StatusInternalServerError, msg.H7006, r)
+
+		return
+	}
 }

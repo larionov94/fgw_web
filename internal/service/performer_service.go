@@ -52,12 +52,12 @@ func (p *PerformerService) AuthPerformer(ctx context.Context, id int, password s
 	if err != nil || !authOK {
 		p.logg.LogE(msg.E3210, err)
 
-		return &dto.AuthPerformerDTO{Success: false, Message: msg.E3210}, err
+		return &dto.AuthPerformerDTO{Success: false, Message: msg.E3210 + " AuthPerformer.AuthByIdAndPass()"}, err
 	}
 
 	performer, err := p.performerRepo.FindById(ctx, id)
 	if err != nil {
-		return &dto.AuthPerformerDTO{Success: false, Message: msg.E3212}, err
+		return &dto.AuthPerformerDTO{Success: false, Message: msg.E3212 + "AuthPerformer.FindById"}, err
 	}
 
 	return &dto.AuthPerformerDTO{
