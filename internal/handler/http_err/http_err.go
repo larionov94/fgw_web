@@ -14,3 +14,13 @@ func WriteMethodNotAllowed(w http.ResponseWriter, r *http.Request, logg *common.
 	http.Error(w, message, http.StatusMethodNotAllowed)
 	logg.LogWithResponseE(message+err, http.StatusMethodNotAllowed, r.Method, r.URL.Path)
 }
+
+func WriteUnauthorized(w http.ResponseWriter, r *http.Request, logg *common.Logger, message, err string) {
+	http.Error(w, message, http.StatusUnauthorized)
+	logg.LogWithResponseE(message+err, http.StatusUnauthorized, r.Method, r.URL.Path)
+}
+
+func WriteBadRequest(w http.ResponseWriter, r *http.Request, logg *common.Logger, message, err string) {
+	http.Error(w, message, http.StatusBadRequest)
+	logg.LogWithResponseE(message+err, http.StatusBadRequest, r.Method, r.URL.Path)
+}

@@ -1,6 +1,7 @@
 package json_api
 
 import (
+	"FGW_WEB/internal/handler/json_err"
 	"FGW_WEB/internal/service"
 	"FGW_WEB/internal/service/dto"
 	"FGW_WEB/pkg/common"
@@ -19,7 +20,7 @@ func NewPerformerHandlerJSON(performerService service.PerformerUseCase, logg *co
 }
 
 func (p *PerformerHandlerJSON) ServeHTTPJSONRouter(mux *http.ServeMux) {
-	mux.HandleFunc("/api/fgw/login", p.AuthPerformer)
+	mux.HandleFunc("/api/fgw/login", p.AuthPerformerJSON)
 	mux.HandleFunc("/api/fgw/performers", p.AllPerformersJSON)
 }
 
@@ -27,14 +28,14 @@ func (p *PerformerHandlerJSON) AllPerformersJSON(w http.ResponseWriter, r *http.
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	if r.Method != http.MethodGet {
-		p.sendErrorResponse(w, http.StatusMethodNotAllowed, msg.H7000, r)
+		json_err.SendErrorResponse(w, http.StatusMethodNotAllowed, msg.H7000, r)
 
 		return
 	}
 
 	performers, err := p.performerService.GetAllPerformers(r.Context())
 	if err != nil {
-		p.sendErrorResponse(w, http.StatusInternalServerError, msg.H7001, r)
+		json_err.SendErrorResponse(w, http.StatusInternalServerError, msg.H7001, r)
 
 		return
 	}
@@ -49,53 +50,38 @@ func (p *PerformerHandlerJSON) AllPerformersJSON(w http.ResponseWriter, r *http.
 	data := dto.PerformerDTOList{Performers: performers}
 
 	if err = json.NewEncoder(w).Encode(data); err != nil {
-		p.sendErrorResponse(w, http.StatusInternalServerError, msg.H7001, r)
+		json_err.SendErrorResponse(w, http.StatusInternalServerError, msg.H7001, r)
 
 		return
 	}
 }
 
-func (p *PerformerHandlerJSON) AuthPerformer(w http.ResponseWriter, r *http.Request) {
+func (p *PerformerHandlerJSON) AuthPerformerJSON(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	if r.Method != http.MethodPost {
+		json_err.SendErrorResponse(w, http.StatusMethodNotAllowed, msg.H7000, r)
+
+		return
+	}
+
 	var req struct {
-		ID       int    `json:"id"`
+		Id       int    `json:"id"`
 		Password string `json:"password"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		json_err.SendErrorResponse(w, http.StatusBadRequest, msg.H7004, r)
+
 		return
 	}
 
-	result, err := p.performerService.AuthPerformer(r.Context(), req.ID, req.Password)
+	result, err := p.performerService.AuthPerformer(r.Context(), req.Id, req.Password)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		json_err.SendErrorResponse(w, http.StatusUnauthorized, msg.H7005, r)
+
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
-}
-
-func (p *PerformerHandlerJSON) sendErrorResponse(w http.ResponseWriter, statusCode int, msgCode string, r *http.Request) {
-	errorResponse := struct {
-		Error       string               `json:"error"`
-		Code        int                  `json:"code"`
-		Description common.ResponseEntry `json:"description"`
-	}{
-		msgCode,
-		statusCode,
-		common.ResponseEntry{
-			StatusCode: statusCode,
-			MethodHTTP: r.Method,
-			URL:        r.URL.Path,
-		},
-	}
-
-	w.WriteHeader(statusCode)
-	if err := json.NewEncoder(w).Encode(errorResponse); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	p.logg.LogWithResponseE(msgCode, statusCode, r.Method, r.URL.Path)
 }

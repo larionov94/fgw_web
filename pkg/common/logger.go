@@ -15,7 +15,7 @@ const (
 	// SkipNumOfStackFrame количество кадров стека, которые необходимо пропустить перед записью на ПК, где 0 идентифицирует
 	// кадр для самих вызывающих абонентов, а 1 идентифицирует вызывающего абонента. Возвращает количество записей,
 	// записанных на компьютер.
-	SkipNumOfStackFrame    = 5
+	SkipNumOfStackFrame    = 7
 	CodeLength             = 6 // CodeLength извлечение подстроки из поля.
 	DefaultMaxStackFrames  = 15
 	DefaultFilePermissions = 0644
