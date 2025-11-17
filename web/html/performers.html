@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/web/css/style.css" type="text/css">
+    <title>{{.Title}}</title>
+</head>
+<body>
+<div class="container">
+    <h1>{{.Title}}</h1>
+
+    {{if .Performers}}
+    <table class="performers-table">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>ФИО</th>
+            <th>Код доступа</th>
+            <th>Роль Forms</th>
+            <th>Роль FGW</th>
+            <th>Статус</th>
+            <th>Дата создания</th>
+            <th>ТН владельца</th>
+            <th>Дата изменения</th>
+            <th>ТН владельца</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{range .Performers}}
+        <tr {{if .Archive}}class="archive" {{end}}>
+            <td>{{.Id}}</td>
+            <td>{{.FIO}}</td>
+            <td>{{.BC}}</td>
+            <td>{{.IdRoleAForms}}</td>
+            <td>{{.IdRoleAFGW}}</td>
+            <td class="{{if .Archive}}status-archive{{else}}status-active{{end}}">
+                {{if .Archive}}Архивный{{else}}Активный{{end}}
+            </td>
+            <td>{{formatDateTime .Audit.CreatedAt}}</td>
+            <td>{{ .Audit.CreatedBy}}</td>
+            <td>{{formatDateTime .Audit.UpdatedAt}}</td>
+            <td>{{ .Audit.UpdatedBy}}</td>
+        </tr>
+        {{end}}
+        </tbody>
+    </table>
+
+    <p style="margin-top: 20px; color: #666;">
+        Всего сотрудников: {{len .Performers}}
+    </p>
+    {{else}}
+    <p style="text-align: center; color: #666; font-style: italic;">
+        Нет данных о сотрудниках
+    </p>
+    {{end}}
+</div>
+</body>
+</html>

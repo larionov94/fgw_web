@@ -6,3 +6,12 @@ import "time"
 func GetCurrentDateTime() string {
 	return time.Now().Format(time.DateTime)
 }
+
+// FormatDateTime - функция форматирования даты в формате ДД.ММ.ГГГГ ЧЧ:ММ
+func FormatDateTime(dateTime string) string {
+	t, err := time.Parse(time.RFC3339, dateTime)
+	if err != nil {
+		return dateTime
+	}
+	return t.Format("02.01.2006 15:04:05")
+}

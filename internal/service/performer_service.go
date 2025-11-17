@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 )
 
 type PerformerService struct {
@@ -77,9 +76,9 @@ func (p *PerformerService) toPerformerDTO(performer model.Performer) dto.Perform
 		IdRoleAForms: performer.IdRoleAForms,
 		IdRoleAFGW:   performer.IdRoleAFGW,
 		Audit: dto.AuditDTO(model.Audit{
-			CreatedAt: time.Now().String(),
+			CreatedAt: performer.AuditRec.CreatedAt,
 			CreatedBy: 6680,
-			UpdatedAt: time.Now().String(),
+			UpdatedAt: performer.AuditRec.UpdatedAt,
 			UpdatedBy: 6680,
 		}),
 	}

@@ -1,5 +1,9 @@
 package model
 
+type PerformerList struct {
+	Performers *[]PerformerList
+}
+
 type Performer struct {
 	Id           int    // Id - табельный номер.
 	FIO          string // FIO - ФИО сотрудника.

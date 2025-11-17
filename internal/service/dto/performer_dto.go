@@ -1,5 +1,9 @@
 package dto
 
+type PerformerDTOList struct {
+	Performers []PerformerDTO
+}
+
 type PerformerDTO struct {
 	Id           int      `json:"id"`
 	FIO          string   `json:"fio"`
