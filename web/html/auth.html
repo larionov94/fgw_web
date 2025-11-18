@@ -6,14 +6,15 @@
 </head>
 <body>
 <h1>Авторизация</h1>
+
 <form method="POST" action="/login">
     <label>
         Табельный номер:
-        <input type="number" name="id" required>
+        <input type="number" name="performerId" required>
     </label>
     <label>
         Пароль:
-        <input type="password" name="passwd" required>
+        <input type="password" name="performerPassword" required>
     </label>
     <input type="submit" value="Войти">
 </form>

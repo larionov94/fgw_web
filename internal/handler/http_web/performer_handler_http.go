@@ -9,11 +9,14 @@ import (
 	"FGW_WEB/pkg/convert"
 	"html/template"
 	"net/http"
+	"net/url"
 )
 
 const (
 	tmplPerformersHTML   = "performers.html"
 	tmplErrorHTML        = "error.html"
+	tmplAuthHTML         = "auth.html"
+	tmplStartPageHTML    = "index.html" // /fgw
 	prefixTmplPerformers = "web/html/"
 )
 
@@ -27,8 +30,14 @@ func NewPerformerHandlerHTML(performerService service.PerformerUseCase, logg *co
 }
 
 func (p *PerformerHandlerHTML) ServeHTTPHTMLRouter(mux *http.ServeMux) {
+	mux.HandleFunc("/", p.ShowAuthForm)
 	mux.HandleFunc("/fgw/performers", p.AllPerformersHTML)
-	mux.HandleFunc("/fgw/login", p.AuthPerformerHTML)
+	mux.HandleFunc("/login", p.AuthPerformerHTML)
+	mux.HandleFunc("/fgw", p.StartPage)
+}
+
+func (p *PerformerHandlerHTML) ShowAuthForm(w http.ResponseWriter, r *http.Request) {
+	p.renderPage(w, tmplAuthHTML, nil, r)
 }
 
 func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.Request) {
@@ -67,21 +76,42 @@ func (p *PerformerHandlerHTML) AuthPerformerHTML(w http.ResponseWriter, r *http.
 		return
 	}
 
-	//performers, err := p.performerService.GetAllPerformerAuth(r.Context())
-	//if err != nil {
-	//	http_err.WriteServerError(w, r, p.logg, msg.H7001, err.Error())
-	//
-	//	return
-	//}
+	if err := r.ParseForm(); err != nil {
+		p.renderErrorPage(w, http.StatusBadRequest, msg.H7007, r)
 
-	//performerId := convert.ParseFormFieldInt(r,"id")
-	//performerPass := r.FormValue("pass")
+		return
+	}
 
-	//for _, performer := range performers {
-	//	if performer.Id == performerId && performer.Pass == performerPass {
-	//
-	//	}
-	//}
+	performerIdStr := r.FormValue("performerId")
+	performerPass := r.FormValue("performerPassword")
+
+	if performerIdStr == "" || performerPass == "" {
+		p.renderErrorPage(w, http.StatusUnauthorized, msg.E3211, r)
+
+		return
+	}
+
+	performerId := convert.ConvStrToInt(performerIdStr)
+
+	authResult, err := p.performerService.AuthPerformer(r.Context(), performerId, performerPass)
+	if err != nil {
+		if authResult != nil && !authResult.Success {
+			p.renderErrorPage(w, http.StatusUnauthorized, authResult.Message, r)
+		} else {
+			p.renderErrorPage(w, http.StatusUnauthorized, msg.H7005, r)
+		}
+		return
+	}
+
+	if authResult.Success {
+		http.Redirect(w, r, "/fgw", http.StatusFound)
+	} else {
+		http.Redirect(w, r, "/login?error"+url.QueryEscape(authResult.Message), http.StatusFound)
+	}
+}
+
+func (p *PerformerHandlerHTML) StartPage(w http.ResponseWriter, r *http.Request) {
+	p.renderPage(w, tmplStartPageHTML, nil, r)
 }
 
 func (p *PerformerHandlerHTML) renderErrorPage(w http.ResponseWriter, statusCode int, msgCode string, r *http.Request) {

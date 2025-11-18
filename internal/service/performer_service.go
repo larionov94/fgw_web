@@ -43,7 +43,13 @@ func (p *PerformerService) AuthPerformer(ctx context.Context, id int, password s
 	}
 
 	authOK, err := p.performerRepo.AuthByIdAndPass(ctx, id, password)
-	if err != nil || !authOK {
+	if err != nil {
+		p.logg.LogE(msg.E3210, err)
+
+		return &model.AuthPerformer{Success: false, Message: msg.E3210 + " AuthPerformer.AuthByIdAndPass()"}, err
+	}
+
+	if !authOK {
 		p.logg.LogE(msg.E3210, err)
 
 		return &model.AuthPerformer{Success: false, Message: msg.E3210 + " AuthPerformer.AuthByIdAndPass()"}, err

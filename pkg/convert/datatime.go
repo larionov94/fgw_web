@@ -1,6 +1,8 @@
 package convert
 
-import "time"
+import (
+	"time"
+)
 
 // GetCurrentDateTime получить текущую дату и время в формате "2006-01-02 15:04:05".
 func GetCurrentDateTime() string {
@@ -13,5 +15,6 @@ func FormatDateTime(dateTime string) string {
 	if err != nil {
 		return dateTime
 	}
+
 	return t.Format("02.01.2006 15:04:05")
 }

@@ -2,13 +2,13 @@ package common
 
 import (
 	"FGW_WEB/pkg/common/msg"
-	"FGW_WEB/pkg/convert"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"runtime"
 	"strings"
+	"time"
 )
 
 const (
@@ -127,7 +127,7 @@ func (l *Logger) LogWithResponseE(msg string, statusCode int, method, url string
 // logCustom логирование пользовательских сообщений с поддержкой уровня логирования и дополнительной информацией.
 func (l *Logger) logCustom(level LogLevel, message string, errStr *string, response *ResponseEntry) {
 	entry := &LogEntry{
-		DateTime:        convert.GetCurrentDateTime(),
+		DateTime:        time.Now().Format(time.DateTime),
 		InfoPC:          l.infoPC,
 		Level:           level,
 		Message:         l.createMessage(message, errStr),
