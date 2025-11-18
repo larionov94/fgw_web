@@ -115,25 +115,12 @@ func (p *PerformerRepo) FindById(ctx context.Context, id int) (*model.Performer,
 
 // UpdById обновить данные сотрудника по табельному номеру в БД.
 func (p *PerformerRepo) UpdById(ctx context.Context, id int, performer *model.Performer) error {
-	result, err := p.mssql.ExecContext(ctx, FGWsvPerformerUpdByIdQuery, id, performer.IdRoleAForms,
+	_, err := p.mssql.ExecContext(ctx, FGWsvPerformerUpdByIdQuery, id, performer.IdRoleAForms,
 		performer.IdRoleAFGW, performer.AuditRec.UpdatedBy)
 	if err != nil {
 		p.logg.LogE(msg.E3202, err)
 
 		return fmt.Errorf("%s: %v", msg.E3202, err)
-	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		p.logg.LogE(msg.E3207, err)
-
-		return fmt.Errorf("%s: %v", msg.E3207, err)
-	}
-
-	if rows == 0 {
-		p.logg.LogE(msg.E3208, err)
-
-		return fmt.Errorf("%s: %v", msg.E3208, err)
 	}
 
 	return nil

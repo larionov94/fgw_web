@@ -10,6 +10,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 const (
@@ -34,6 +35,7 @@ func (p *PerformerHandlerHTML) ServeHTTPHTMLRouter(mux *http.ServeMux) {
 	mux.HandleFunc("/fgw/performers", p.AllPerformersHTML)
 	mux.HandleFunc("/login", p.AuthPerformerHTML)
 	mux.HandleFunc("/fgw", p.StartPage)
+	mux.HandleFunc("/fgw/performers/upd", p.UpdatePerformer)
 }
 
 func (p *PerformerHandlerHTML) ShowAuthForm(w http.ResponseWriter, r *http.Request) {
@@ -108,6 +110,66 @@ func (p *PerformerHandlerHTML) AuthPerformerHTML(w http.ResponseWriter, r *http.
 	} else {
 		http.Redirect(w, r, "/login?error"+url.QueryEscape(authResult.Message), http.StatusFound)
 	}
+}
+
+func (p *PerformerHandlerHTML) UpdatePerformer(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	if r.Method != http.MethodPost {
+		http_err.WriteMethodNotAllowed(w, r, p.logg, msg.H7000, "")
+
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		p.renderErrorPage(w, http.StatusBadRequest, msg.H7007, r)
+
+		return
+	}
+
+	performerIdStr := r.FormValue("performerId")
+	idRoleAFormsStr := r.FormValue("idRoleAForms")
+	idRoleAFGWStr := r.FormValue("idRoleAFGW")
+	updatedByStr := r.FormValue("updatedBy")
+
+	if performerIdStr == "" || idRoleAFormsStr == "" || idRoleAFGWStr == "" || updatedByStr == "" {
+		p.renderErrorPage(w, http.StatusUnauthorized, msg.E3214, r)
+
+		return
+	}
+
+	performerId := convert.ConvStrToInt(performerIdStr)
+
+	exists, err := p.performerService.ExistPerformer(r.Context(), performerId)
+	if err != nil {
+		http_err.WriteServerError(w, r, p.logg, msg.H7008, err.Error())
+
+		return
+	}
+
+	if !exists {
+		p.renderErrorPage(w, http.StatusUnauthorized, msg.E3212, r)
+
+		return
+	}
+
+	performer := model.Performer{
+		Id:           performerId,
+		IdRoleAForms: convert.ConvStrToInt(idRoleAFormsStr),
+		IdRoleAFGW:   convert.ConvStrToInt(idRoleAFGWStr),
+		AuditRec: model.Audit{
+			UpdatedAt: time.Now().String(),
+			UpdatedBy: 6680, // TODO: заменить на авторизованного сотрудника
+		},
+	}
+
+	if err = p.performerService.UpdPerformer(r.Context(), performerId, &performer); err != nil {
+		http_err.WriteServerError(w, r, p.logg, msg.H7007, err.Error())
+
+		return
+	}
+
+	http.Redirect(w, r, "/fgw/performers", http.StatusSeeOther)
 }
 
 func (p *PerformerHandlerHTML) StartPage(w http.ResponseWriter, r *http.Request) {

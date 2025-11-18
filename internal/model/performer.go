@@ -1,5 +1,7 @@
 package model
 
+import "fmt"
+
 type PerformerList struct {
 	Performers []Performer
 }
@@ -19,4 +21,29 @@ type AuthPerformer struct {
 	Success   bool      `json:"success"`
 	Performer Performer `json:"performer"`
 	Message   string    `json:"message"`
+}
+
+type PerformerUpdate struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+}
+
+func ValidateUpdateData(data *Performer) error {
+	if data == nil {
+		return fmt.Errorf("ошибка: не удалось обновить данные, данных нет")
+	}
+
+	if data.AuditRec.UpdatedBy == 0 || data.AuditRec.UpdatedBy < 0 {
+		return fmt.Errorf("ошибка: невалидное поле")
+	}
+
+	if data.IdRoleAForms < 0 {
+		return fmt.Errorf("ошибка: невалидное поле")
+	}
+
+	if data.IdRoleAFGW < 0 {
+		return fmt.Errorf("ошибка: невалидное поле")
+	}
+
+	return nil
 }

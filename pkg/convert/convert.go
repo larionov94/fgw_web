@@ -28,6 +28,18 @@ func ConvStrToInt(str string) int {
 	return value
 }
 
+// ParseStrToID пытается разобрать строку в UUID и пишет ошибку в HTTP-ответ при неудаче.
+func ParseStrToID(fieldName string) (int, error) {
+	value, err := strconv.Atoi(fieldName)
+	if err != nil {
+		log.Printf("Ошибка: [%s] --- ссылка на код: [ %s ] --- значение: [%v]", err.Error(), pathToStrCode(), value)
+
+		return 0, err
+	}
+
+	return value, nil
+}
+
 // ParseFormFieldInt преобразует поле в целое число, полученное из HTTP запроса.
 func ParseFormFieldInt(r *http.Request, fieldName string) int {
 

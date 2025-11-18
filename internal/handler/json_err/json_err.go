@@ -10,8 +10,7 @@ const (
 	// SkipNumOfStackFrame количество кадров стека, которые необходимо пропустить перед записью на ПК, где 0 идентифицирует
 	// кадр для самих вызывающих абонентов, а 1 идентифицирует вызывающего абонента. Возвращает количество записей,
 	// записанных на компьютер.
-	SkipNumOfStackFrame   = 3
-	DefaultMaxStackFrames = 15
+	SkipNumOfStackFrame = 3
 )
 
 func SendErrorResponse(w http.ResponseWriter, statusCode int, msgCode string, r *http.Request) {

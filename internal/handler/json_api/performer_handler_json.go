@@ -6,6 +6,7 @@ import (
 	"FGW_WEB/internal/service"
 	"FGW_WEB/pkg/common"
 	"FGW_WEB/pkg/common/msg"
+	"FGW_WEB/pkg/convert"
 	"encoding/json"
 	"net/http"
 )
@@ -22,6 +23,7 @@ func NewPerformerHandlerJSON(performerService service.PerformerUseCase, logg *co
 func (p *PerformerHandlerJSON) ServeHTTPJSONRouter(mux *http.ServeMux) {
 	mux.HandleFunc("/api/fgw/login", p.AuthPerformerJSON)
 	mux.HandleFunc("/api/fgw/performers", p.AllPerformersJSON)
+	mux.HandleFunc("/api/fgw/performers/upd", p.UpdPerformersJSON)
 }
 
 func (p *PerformerHandlerJSON) AllPerformersJSON(w http.ResponseWriter, r *http.Request) {
@@ -84,6 +86,60 @@ func (p *PerformerHandlerJSON) AuthPerformerJSON(w http.ResponseWriter, r *http.
 	}
 
 	WriteJSON(w, result, r)
+}
+
+func (p *PerformerHandlerJSON) UpdPerformersJSON(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	if r.Method != http.MethodPost {
+		json_err.SendErrorResponse(w, http.StatusMethodNotAllowed, msg.H7000, r)
+
+		return
+	}
+
+	performerIdStr := r.URL.Query().Get("performerId")
+	performerId, err := convert.ParseStrToID(performerIdStr)
+	if err != nil {
+		json_err.SendErrorResponse(w, http.StatusBadRequest, msg.H7003, r)
+
+		return
+	}
+
+	var performer model.Performer
+	if err = json.NewDecoder(r.Body).Decode(&performer); err != nil {
+		json_err.SendErrorResponse(w, http.StatusBadRequest, msg.H7004, r)
+
+		return
+	}
+
+	exists, err := p.performerService.ExistPerformer(r.Context(), performerId)
+	if err != nil {
+		json_err.SendErrorResponse(w, http.StatusInternalServerError, msg.H7005, r)
+
+		return
+	}
+
+	if !exists {
+		json_err.SendErrorResponse(w, http.StatusNotFound, msg.H7008, r)
+
+		return
+	}
+
+	if err = p.performerService.UpdPerformer(r.Context(), performerId, &performer); err != nil {
+		json_err.SendErrorResponse(w, http.StatusInternalServerError, msg.H7001, r)
+
+		return
+	}
+
+	response := model.PerformerUpdate{
+		Success: true,
+		Message: "Сотрудник успешно обновлен",
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if err = json.NewEncoder(w).Encode(&response); err != nil {
+		return
+	}
 }
 
 func WriteJSON(w http.ResponseWriter, v interface{}, r *http.Request) {
