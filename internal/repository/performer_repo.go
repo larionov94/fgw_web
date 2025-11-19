@@ -21,7 +21,7 @@ func NewPerformerRepo(mssql *sql.DB, logger *common.Logger) *PerformerRepo {
 }
 
 type PerformerRepository interface {
-	All(ctx context.Context) ([]model.Performer, error)
+	All(ctx context.Context) ([]*model.Performer, error)
 	AuthByIdAndPass(ctx context.Context, id int, password string) (bool, error)
 	FindById(ctx context.Context, id int) (*model.Performer, error)
 	UpdById(ctx context.Context, id int, performer *model.Performer) error
@@ -29,7 +29,7 @@ type PerformerRepository interface {
 }
 
 // All получить всех сотрудников из БД.
-func (p *PerformerRepo) All(ctx context.Context) ([]model.Performer, error) {
+func (p *PerformerRepo) All(ctx context.Context) ([]*model.Performer, error) {
 	rows, err := p.mssql.QueryContext(ctx, FGWsvPerformerAllQuery)
 	if err != nil {
 		p.logg.LogE(msg.E3202, err)
@@ -38,7 +38,7 @@ func (p *PerformerRepo) All(ctx context.Context) ([]model.Performer, error) {
 	}
 	defer db.RowsClose(rows)
 
-	var performers []model.Performer
+	var performers []*model.Performer
 	for rows.Next() {
 		var performer model.Performer
 		if err = rows.Scan(
@@ -59,7 +59,7 @@ func (p *PerformerRepo) All(ctx context.Context) ([]model.Performer, error) {
 			return nil, fmt.Errorf("%s: %v", msg.E3204, err)
 		}
 
-		performers = append(performers, performer)
+		performers = append(performers, &performer)
 	}
 
 	if err = rows.Err(); err != nil {

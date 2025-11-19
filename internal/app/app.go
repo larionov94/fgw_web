@@ -50,7 +50,7 @@ func StartApp() {
 	repoPerformer := repository.NewPerformerRepo(mssqlDB, logger)
 	servicePerformer := service.NewPerformerService(repoPerformer, logger)
 	handlerPerformerJSON := json_api.NewPerformerHandlerJSON(servicePerformer, logger)
-	handlerPerformerHTML := http_web.NewPerformerHandlerHTML(servicePerformer, logger)
+	handlerPerformerHTML := http_web.NewPerformerHandlerHTML(servicePerformer, serviceRole, logger)
 
 	mux := http.NewServeMux()
 

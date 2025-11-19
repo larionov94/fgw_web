@@ -23,11 +23,12 @@ const (
 
 type PerformerHandlerHTML struct {
 	performerService service.PerformerUseCase
+	roleService      service.RoleUseCase
 	logg             *common.Logger
 }
 
-func NewPerformerHandlerHTML(performerService service.PerformerUseCase, logg *common.Logger) *PerformerHandlerHTML {
-	return &PerformerHandlerHTML{performerService: performerService, logg: logg}
+func NewPerformerHandlerHTML(performerService service.PerformerUseCase, roleService service.RoleUseCase, logg *common.Logger) *PerformerHandlerHTML {
+	return &PerformerHandlerHTML{performerService: performerService, roleService: roleService, logg: logg}
 }
 
 func (p *PerformerHandlerHTML) ServeHTTPHTMLRouter(mux *http.ServeMux) {
@@ -35,7 +36,7 @@ func (p *PerformerHandlerHTML) ServeHTTPHTMLRouter(mux *http.ServeMux) {
 	mux.HandleFunc("/fgw/performers", p.AllPerformersHTML)
 	mux.HandleFunc("/login", p.AuthPerformerHTML)
 	mux.HandleFunc("/fgw", p.StartPage)
-	mux.HandleFunc("/fgw/performers/upd", p.UpdatePerformerHTML)
+	mux.HandleFunc("/fgw/performers/upd", p.UpdPerformerHTML)
 }
 
 func (p *PerformerHandlerHTML) ShowAuthForm(w http.ResponseWriter, r *http.Request) {
@@ -58,12 +59,25 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 		return
 	}
 
+	roles, err := p.roleService.GetAllRole(r.Context())
+	if err != nil {
+		http_err.WriteServerError(w, r, p.logg, msg.H7001, err.Error())
+
+		return
+	}
+
 	data := struct {
 		Title      string
-		Performers []model.Performer
+		Performers []*model.Performer
+		Roles      []*model.Role
 	}{
 		Title:      "Список сотрудников",
 		Performers: performers,
+		Roles:      roles,
+	}
+
+	if performerIdStr := r.URL.Query().Get("performerId"); performerIdStr != "" {
+		p.markEditingPerformer(performerIdStr, performers)
 	}
 
 	p.renderPage(w, tmplPerformersHTML, data, r)
@@ -112,14 +126,24 @@ func (p *PerformerHandlerHTML) AuthPerformerHTML(w http.ResponseWriter, r *http.
 	}
 }
 
-func (p *PerformerHandlerHTML) UpdatePerformerHTML(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-	if r.Method != http.MethodPost {
+func (p *PerformerHandlerHTML) UpdPerformerHTML(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodPost:
+		p.processUpdFormPerformer(w, r)
+	case http.MethodGet:
+		p.renderUpdFormPerformer(w, r)
+	default:
 		http_err.WriteMethodNotAllowed(w, r, p.logg, msg.H7000, "")
-
-		return
 	}
+}
+
+func (p *PerformerHandlerHTML) renderUpdFormPerformer(w http.ResponseWriter, r *http.Request) {
+	performerIdStr := r.URL.Query().Get("performerId")
+	http.Redirect(w, r, "/fgw/performerId?performer="+performerIdStr, http.StatusFound)
+}
+
+func (p *PerformerHandlerHTML) processUpdFormPerformer(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	if err := r.ParseForm(); err != nil {
 		p.renderErrorPage(w, http.StatusBadRequest, msg.H7007, r)
@@ -132,44 +156,56 @@ func (p *PerformerHandlerHTML) UpdatePerformerHTML(w http.ResponseWriter, r *htt
 	idRoleAFGWStr := r.FormValue("idRoleAFGW")
 	updatedByStr := r.FormValue("updatedBy")
 
-	if performerIdStr == "" || idRoleAFormsStr == "" || idRoleAFGWStr == "" || updatedByStr == "" {
-		p.renderErrorPage(w, http.StatusUnauthorized, msg.E3214, r)
-
-		return
-	}
+	//if idRoleAFormsStr == "" || idRoleAFGWStr == "" || updatedByStr == "" {
+	//	p.renderErrorPage(w, http.StatusUnauthorized, msg.E3214, r)
+	//
+	//	return
+	//}
 
 	performerId := convert.ConvStrToInt(performerIdStr)
+	updatedBy := convert.ConvStrToInt(updatedByStr)
+	idRoleAForms := convert.ConvStrToInt(idRoleAFormsStr)
+	idRoleAFGW := convert.ConvStrToInt(idRoleAFGWStr)
 
-	exists, err := p.performerService.ExistPerformer(r.Context(), performerId)
-	if err != nil {
-		http_err.WriteServerError(w, r, p.logg, msg.H7008, err.Error())
-
-		return
-	}
-
-	if !exists {
-		p.renderErrorPage(w, http.StatusUnauthorized, msg.E3212, r)
-
-		return
-	}
+	//exists, err := p.performerService.ExistPerformer(r.Context(), performerId)
+	//if err != nil {
+	//	http_err.WriteServerError(w, r, p.logg, msg.H7008, err.Error())
+	//
+	//	return
+	//}
+	//
+	//if !exists {
+	//	p.renderErrorPage(w, http.StatusUnauthorized, msg.E3212, r)
+	//
+	//	return
+	//}
 
 	performer := model.Performer{
 		Id:           performerId,
-		IdRoleAForms: convert.ConvStrToInt(idRoleAFormsStr),
-		IdRoleAFGW:   convert.ConvStrToInt(idRoleAFGWStr),
+		IdRoleAForms: idRoleAForms,
+		IdRoleAFGW:   idRoleAFGW,
 		AuditRec: model.Audit{
 			UpdatedAt: time.Now().String(),
-			UpdatedBy: 6680, // TODO: заменить на авторизованного сотрудника
+			UpdatedBy: updatedBy, // TODO: заменить на авторизованного сотрудника
 		},
 	}
 
-	if err = p.performerService.UpdPerformer(r.Context(), performerId, &performer); err != nil {
+	if err := p.performerService.UpdPerformer(r.Context(), performerId, &performer); err != nil {
 		http_err.WriteServerError(w, r, p.logg, msg.H7007, err.Error())
 
 		return
 	}
 
 	http.Redirect(w, r, "/fgw/performers", http.StatusSeeOther)
+}
+
+func (p *PerformerHandlerHTML) markEditingPerformer(id string, performers []*model.Performer) {
+	performerId := convert.ConvStrToInt(id)
+	for _, performer := range performers {
+		if performer.Id == performerId {
+			performer.IsEditing = true
+		}
+	}
 }
 
 func (p *PerformerHandlerHTML) StartPage(w http.ResponseWriter, r *http.Request) {

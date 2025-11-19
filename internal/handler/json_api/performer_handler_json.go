@@ -44,7 +44,7 @@ func (p *PerformerHandlerJSON) AllPerformersJSON(w http.ResponseWriter, r *http.
 
 	if len(performers) == 0 {
 		w.WriteHeader(http.StatusNoContent)
-		if err = json.NewEncoder(w).Encode(&model.PerformerList{Performers: []model.Performer{}}); err != nil {
+		if err = json.NewEncoder(w).Encode(&model.PerformerList{Performers: []*model.Performer{}}); err != nil {
 			return
 		}
 	}

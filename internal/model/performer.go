@@ -3,7 +3,8 @@ package model
 import "fmt"
 
 type PerformerList struct {
-	Performers []Performer
+	Performers []*Performer
+	Roles      []*Role
 }
 
 type Performer struct {
@@ -15,6 +16,7 @@ type Performer struct {
 	IdRoleAForms int    `json:"idRoleAForms"` // IdRoleAForms - id роли.
 	IdRoleAFGW   int    `json:"idRoleAFGW"`   // IdRoleAFGW - id роли.
 	AuditRec     Audit  `json:"auditRec"`     // AuditRec - аудит для отслеживания изменений данных.
+	IsEditing    bool   `json:"isEditing"`
 }
 
 type AuthPerformer struct {

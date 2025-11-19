@@ -20,13 +20,13 @@ func NewPerformerService(performerRepo repository.PerformerRepository, logger *c
 }
 
 type PerformerUseCase interface {
-	GetAllPerformers(ctx context.Context) ([]model.Performer, error)
+	GetAllPerformers(ctx context.Context) ([]*model.Performer, error)
 	AuthPerformer(ctx context.Context, id int, password string) (*model.AuthPerformer, error)
 	UpdPerformer(ctx context.Context, id int, performer *model.Performer) error
 	ExistPerformer(ctx context.Context, id int) (bool, error)
 }
 
-func (p *PerformerService) GetAllPerformers(ctx context.Context) ([]model.Performer, error) {
+func (p *PerformerService) GetAllPerformers(ctx context.Context) ([]*model.Performer, error) {
 	performers, err := p.performerRepo.All(ctx)
 	if err != nil {
 		p.logg.LogE(msg.E3209, err)
