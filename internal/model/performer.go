@@ -28,7 +28,7 @@ type PerformerUpdate struct {
 	Message string `json:"message"`
 }
 
-func ValidateUpdateData(data *Performer) error {
+func ValidateUpdateDataPerformer(data *Performer) error {
 	if data == nil {
 		return fmt.Errorf("ошибка: не удалось обновить данные, данных нет")
 	}

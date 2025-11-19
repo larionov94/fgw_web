@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/web/css/style.css" type="text/css">
+    <title>{{.Title}}</title>
+</head>
+<body>
+<div class="container">
+    <h1>{{.Title}}</h1>
+
+    <h2>Добавить роль сотрудника</h2>
+    <form id="roleAddForm" action="/fgw/roles/add" method="POST">
+        <label>
+            ИД роли:
+            <input type="number" name="roleId" placeholder="Введите ид роли" required>
+            <span class="error" id="number-error"></span>
+        </label>
+
+        <label>
+            Наименование роли:
+            <input type="text" name="name" placeholder="Введите наименование роли" required>
+            <span class="error" id="name-error"></span>
+        </label>
+
+        <label>
+            Описание роли:
+            <input type="text" name="description" placeholder="Введите описание роли" required>
+            <span class="error" id="desc-error"></span>
+        </label>
+
+        <!--        Убрать после написания авторизации1-->
+        <label>
+            ИД сотрудника:
+            <input type="number" name="createdBy" placeholder="Введите ид пользователя">
+            <span class="error" id="createdBy-error"></span>
+        </label>
+
+
+        <input type="submit" value="Добавить">
+    </form>
+
+
+    {{ if .Roles }}
+    <table class="performers-table">
+        <thead>
+        <tr>
+            <th>ИД</th>
+            <th>Наименование</th>
+            <th>Описание</th>
+            <th>Дата создания</th>
+            <th>ТН владельца</th>
+            <th>Дата изменения</th>
+            <th>ТН владельца</th>
+            <th>Операции</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{range .Roles}}
+
+
+            <tr id="role_{{ .Id }}">
+                <td>{{ .Id }}</td>
+                {{ if .IsEditing }}
+                    <form method="POST" action="/fgw/roles/upd">
+                        <td>
+                            <label>
+                                <input type="text" name="name" value="{{ .Name }}" required>
+                            </label>
+                        </td>
+                        <td>
+                            <label>
+                                <input type="text" name="description" value="{{ .Desc }}" required>
+                            </label>
+                        </td>
+                        <td>{{formatDateTime .AuditRec.CreatedAt}}</td>
+                        <td>{{ .AuditRec.CreatedBy}}</td>
+                        <td>{{formatDateTime .AuditRec.UpdatedAt}}</td>
+                        <td>
+                            <label>
+                                <input type="number" name="updatedBy" value="{{ .AuditRec.UpdatedBy}}">
+                            </label>
+                        </td>
+                        <td>
+                            <input type="hidden" name="roleId" value="{{ .Id }}">
+                            <input type="submit" value="Сохранить">
+                        </td>
+                    </form>
+                {{ else }}
+                    <td>{{ .Name }}</td>
+                    <td>{{ .Desc }}</td>
+                    <td>{{formatDateTime .AuditRec.CreatedAt}}</td>
+                    <td>{{ .AuditRec.CreatedBy}}</td>
+                    <td>{{formatDateTime .AuditRec.UpdatedAt}}</td>
+                    <td>{{ .AuditRec.UpdatedBy}}</td>
+                    <td>
+                        <a href="/fgw/roles?roleId={{ .Id }}#role_{{ .Id }}">Изменить</a>
+                    </td>
+                {{ end }}
+            </tr>
+        {{end}}
+        </tbody>
+    </table>
+
+    <p style="margin-top: 20px; color: #666;">
+        Всего сотрудников: {{len .Roles}}
+    </p>
+    {{else}}
+    <p style="text-align: center; color: #666; font-style: italic;">
+        Нет данных о сотрудниках
+    </p>
+    {{end}}
+</div>
+</body>
+</html>

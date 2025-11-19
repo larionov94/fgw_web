@@ -42,12 +42,20 @@ func StartApp() {
 	}
 	defer db.Close(mssqlDB)
 
+	repoRole := repository.NewRoleRepo(mssqlDB, logger)
+	serviceRole := service.NewRoleService(repoRole, logger)
+	handlerRoleJSON := json_api.NewRoleHandlerJSON(serviceRole, logger)
+	handlerRoleHTML := http_web.NewRoleHandlerHTML(serviceRole, logger)
+
 	repoPerformer := repository.NewPerformerRepo(mssqlDB, logger)
 	servicePerformer := service.NewPerformerService(repoPerformer, logger)
 	handlerPerformerJSON := json_api.NewPerformerHandlerJSON(servicePerformer, logger)
 	handlerPerformerHTML := http_web.NewPerformerHandlerHTML(servicePerformer, logger)
 
 	mux := http.NewServeMux()
+
+	handlerRoleJSON.ServerHTTPJSONRouter(mux)
+	handlerRoleHTML.ServerHTTPHTMLRouter(mux)
 
 	handlerPerformerJSON.ServeHTTPJSONRouter(mux)
 	handlerPerformerHTML.ServeHTTPHTMLRouter(mux)

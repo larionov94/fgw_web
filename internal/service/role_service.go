@@ -1,0 +1,73 @@
+package service
+
+import (
+	"FGW_WEB/internal/model"
+	"FGW_WEB/internal/repository"
+	"FGW_WEB/pkg/common"
+	"FGW_WEB/pkg/common/msg"
+	"context"
+	"fmt"
+)
+
+type RoleService struct {
+	roleRepo repository.RoleRepository
+	logg     *common.Logger
+}
+
+func NewRoleService(roleRepo repository.RoleRepository, logger *common.Logger) *RoleService {
+	return &RoleService{roleRepo: roleRepo, logg: logger}
+}
+
+type RoleUseCase interface {
+	GetAllRole(ctx context.Context) ([]*model.Role, error)
+	UpdRole(ctx context.Context, id int, role *model.Role) error
+	AddRole(ctx context.Context, role *model.Role) error
+	ExistRole(ctx context.Context, id int) (bool, error)
+}
+
+func (r *RoleService) GetAllRole(ctx context.Context) ([]*model.Role, error) {
+	roles, err := r.roleRepo.All(ctx)
+	if err != nil {
+		r.logg.LogE(msg.E3209, err)
+
+		return nil, fmt.Errorf("%s: %v", msg.E3209, err)
+	}
+
+	return roles, nil
+}
+
+func (r *RoleService) UpdRole(ctx context.Context, id int, role *model.Role) error {
+	if err := model.ValidateUpdateDataRole(role); err != nil {
+		r.logg.LogE(msg.E3213, err)
+
+		return fmt.Errorf("%s: %v", msg.E3212, err)
+	}
+
+	if err := r.roleRepo.UpdById(ctx, id, role); err != nil {
+		r.logg.LogE(msg.E3216, err)
+
+		return fmt.Errorf("%s: %v", msg.E3216, err)
+	}
+
+	return nil
+}
+
+func (r *RoleService) AddRole(ctx context.Context, role *model.Role) error {
+	if err := model.ValidateUpdateDataRole(role); err != nil {
+		r.logg.LogE(msg.E3213, err)
+
+		return fmt.Errorf("%s: %v", msg.E3212, err)
+	}
+
+	if err := r.roleRepo.Add(ctx, role); err != nil {
+		r.logg.LogE(msg.E3214, err)
+
+		return fmt.Errorf("%s: %v", msg.E3214, err)
+	}
+
+	return nil
+}
+
+func (r *RoleService) ExistRole(ctx context.Context, id int) (bool, error) {
+	return r.roleRepo.ExistById(ctx, id)
+}

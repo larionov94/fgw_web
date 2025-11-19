@@ -70,16 +70,16 @@ func (p *PerformerService) AuthPerformer(ctx context.Context, id int, password s
 }
 
 func (p *PerformerService) UpdPerformer(ctx context.Context, id int, performer *model.Performer) error {
-	if err := model.ValidateUpdateData(performer); err != nil {
+	if err := model.ValidateUpdateDataPerformer(performer); err != nil {
 		p.logg.LogE(msg.E3213, err)
 
-		return err
+		return fmt.Errorf("%s: %v", msg.E3213, err)
 	}
 
 	if err := p.performerRepo.UpdById(ctx, id, performer); err != nil {
-		p.logg.LogE(msg.E3213, err)
+		p.logg.LogE(msg.E3216, err)
 
-		return err
+		return fmt.Errorf("%s: %v", msg.E3216, err)
 	}
 
 	return nil

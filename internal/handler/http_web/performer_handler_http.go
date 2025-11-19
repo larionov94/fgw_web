@@ -35,7 +35,7 @@ func (p *PerformerHandlerHTML) ServeHTTPHTMLRouter(mux *http.ServeMux) {
 	mux.HandleFunc("/fgw/performers", p.AllPerformersHTML)
 	mux.HandleFunc("/login", p.AuthPerformerHTML)
 	mux.HandleFunc("/fgw", p.StartPage)
-	mux.HandleFunc("/fgw/performers/upd", p.UpdatePerformer)
+	mux.HandleFunc("/fgw/performers/upd", p.UpdatePerformerHTML)
 }
 
 func (p *PerformerHandlerHTML) ShowAuthForm(w http.ResponseWriter, r *http.Request) {
@@ -112,7 +112,7 @@ func (p *PerformerHandlerHTML) AuthPerformerHTML(w http.ResponseWriter, r *http.
 	}
 }
 
-func (p *PerformerHandlerHTML) UpdatePerformer(w http.ResponseWriter, r *http.Request) {
+func (p *PerformerHandlerHTML) UpdatePerformerHTML(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	if r.Method != http.MethodPost {

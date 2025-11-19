@@ -91,22 +91,17 @@ func (p *PerformerHandlerJSON) AuthPerformerJSON(w http.ResponseWriter, r *http.
 func (p *PerformerHandlerJSON) UpdPerformersJSON(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-	if r.Method != http.MethodPost {
+	if r.Method != http.MethodPut {
 		json_err.SendErrorResponse(w, http.StatusMethodNotAllowed, msg.H7000, r)
 
 		return
 	}
 
 	performerIdStr := r.URL.Query().Get("performerId")
-	performerId, err := convert.ParseStrToID(performerIdStr)
-	if err != nil {
-		json_err.SendErrorResponse(w, http.StatusBadRequest, msg.H7003, r)
-
-		return
-	}
+	performerId := convert.ConvStrToInt(performerIdStr)
 
 	var performer model.Performer
-	if err = json.NewDecoder(r.Body).Decode(&performer); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&performer); err != nil {
 		json_err.SendErrorResponse(w, http.StatusBadRequest, msg.H7004, r)
 
 		return
