@@ -3,6 +3,7 @@ package app
 import (
 	"FGW_WEB/internal/config"
 	"FGW_WEB/internal/config/db"
+	"FGW_WEB/internal/handler"
 	"FGW_WEB/internal/handler/http_web"
 	"FGW_WEB/internal/handler/json_api"
 	"FGW_WEB/internal/repository"
@@ -16,17 +17,25 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/gorilla/sessions"
 )
 
 const addr = ":7777"
 const fileEnv = ".env"
 
+var store *sessions.CookieStore
+
 func StartApp() {
+	config.InitSessionStore()
+
 	logger, err := common.NewLogger("")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer logger.Close()
+
+	authMiddleware := handler.NewAuthMiddleware(config.Store, logger)
 
 	configDB, err := config.NewMSSQLCfg(logger, fileEnv)
 	if err != nil {
@@ -50,7 +59,7 @@ func StartApp() {
 	repoPerformer := repository.NewPerformerRepo(mssqlDB, logger)
 	servicePerformer := service.NewPerformerService(repoPerformer, logger)
 	handlerPerformerJSON := json_api.NewPerformerHandlerJSON(servicePerformer, logger)
-	handlerPerformerHTML := http_web.NewPerformerHandlerHTML(servicePerformer, serviceRole, logger)
+	handlerPerformerHTML := http_web.NewPerformerHandlerHTML(servicePerformer, serviceRole, logger, authMiddleware)
 
 	mux := http.NewServeMux()
 

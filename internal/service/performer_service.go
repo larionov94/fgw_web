@@ -24,6 +24,7 @@ type PerformerUseCase interface {
 	AuthPerformer(ctx context.Context, id int, password string) (*model.AuthPerformer, error)
 	UpdPerformer(ctx context.Context, id int, performer *model.Performer) error
 	ExistPerformer(ctx context.Context, id int) (bool, error)
+	FindByIdPerformer(ctx context.Context, id int) (*model.Performer, error)
 }
 
 func (p *PerformerService) GetAllPerformers(ctx context.Context) ([]*model.Performer, error) {
@@ -83,6 +84,17 @@ func (p *PerformerService) UpdPerformer(ctx context.Context, id int, performer *
 	}
 
 	return nil
+}
+
+func (p *PerformerService) FindByIdPerformer(ctx context.Context, id int) (*model.Performer, error) {
+	performer, err := p.performerRepo.FindById(ctx, id)
+	if err != nil {
+		p.logg.LogE(msg.E3216, err)
+
+		return nil, fmt.Errorf("%s: %v", msg.E3216, err)
+	}
+
+	return performer, nil
 }
 
 func (p *PerformerService) ExistPerformer(ctx context.Context, id int) (bool, error) {

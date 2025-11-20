@@ -1,6 +1,8 @@
 package http_web
 
 import (
+	"FGW_WEB/internal/config"
+	"FGW_WEB/internal/handler"
 	"FGW_WEB/internal/handler/http_err"
 	"FGW_WEB/internal/model"
 	"FGW_WEB/internal/service"
@@ -25,21 +27,29 @@ type PerformerHandlerHTML struct {
 	performerService service.PerformerUseCase
 	roleService      service.RoleUseCase
 	logg             *common.Logger
+	authMiddleware   *handler.AuthMiddleware
 }
 
-func NewPerformerHandlerHTML(performerService service.PerformerUseCase, roleService service.RoleUseCase, logg *common.Logger) *PerformerHandlerHTML {
-	return &PerformerHandlerHTML{performerService: performerService, roleService: roleService, logg: logg}
+func NewPerformerHandlerHTML(performerService service.PerformerUseCase, roleService service.RoleUseCase, logg *common.Logger, authMiddleware *handler.AuthMiddleware) *PerformerHandlerHTML {
+	return &PerformerHandlerHTML{performerService: performerService, roleService: roleService, logg: logg, authMiddleware: authMiddleware}
 }
 
 func (p *PerformerHandlerHTML) ServeHTTPHTMLRouter(mux *http.ServeMux) {
 	mux.HandleFunc("/", p.ShowAuthForm)
-	mux.HandleFunc("/fgw/performers", p.AllPerformersHTML)
+	mux.HandleFunc("/fgw/performers", p.authMiddleware.RequireAuth(p.authMiddleware.RequireRole([]int{3}, p.AllPerformersHTML)))
 	mux.HandleFunc("/login", p.AuthPerformerHTML)
-	mux.HandleFunc("/fgw", p.StartPage)
-	mux.HandleFunc("/fgw/performers/upd", p.UpdPerformerHTML)
+	mux.HandleFunc("/logout", p.Logout)
+	mux.HandleFunc("/fgw", p.authMiddleware.RequireAuth(p.StartPage))
+	mux.HandleFunc("/fgw/performers/upd", p.authMiddleware.RequireAuth(p.authMiddleware.RequireRole([]int{3}, p.UpdPerformerHTML)))
 }
 
 func (p *PerformerHandlerHTML) ShowAuthForm(w http.ResponseWriter, r *http.Request) {
+	performerId, ok := p.authMiddleware.GetPerformerId(r)
+	if ok && performerId > 0 {
+		http.Redirect(w, r, "/fgw", http.StatusFound)
+
+		return
+	}
 	p.renderPage(w, tmplAuthHTML, nil, r)
 }
 
@@ -83,6 +93,22 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 	p.renderPage(w, tmplPerformersHTML, data, r)
 }
 
+func (p *PerformerHandlerHTML) Logout(w http.ResponseWriter, r *http.Request) {
+	session, _ := config.Store.Get(r, config.GetSessionName())
+
+	session.Values[config.SessionAuthPerformer] = false
+	session.Values[config.SessionPerformerKey] = nil
+	session.Values[config.SessionRoleKey] = nil
+	session.Options.MaxAge = -1
+
+	err := session.Save(r, w)
+	if err != nil {
+		p.logg.LogE("Ошибка при выходе: ", err)
+	}
+
+	http.Redirect(w, r, "/", http.StatusFound)
+}
+
 func (p *PerformerHandlerHTML) AuthPerformerHTML(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
@@ -120,6 +146,17 @@ func (p *PerformerHandlerHTML) AuthPerformerHTML(w http.ResponseWriter, r *http.
 	}
 
 	if authResult.Success {
+		session, _ := config.Store.Get(r, config.GetSessionName())
+		session.Values[config.SessionAuthPerformer] = true
+		session.Values[config.SessionPerformerKey] = performerId
+		session.Values[config.SessionRoleKey] = authResult.Performer.IdRoleAForms
+
+		err = session.Save(r, w)
+		if err != nil {
+			p.renderErrorPage(w, http.StatusInternalServerError, "Ошибка создания сессии", r)
+
+			return
+		}
 		http.Redirect(w, r, "/fgw", http.StatusFound)
 	} else {
 		http.Redirect(w, r, "/login?error"+url.QueryEscape(authResult.Message), http.StatusFound)
@@ -209,7 +246,19 @@ func (p *PerformerHandlerHTML) markEditingPerformer(id string, performers []*mod
 }
 
 func (p *PerformerHandlerHTML) StartPage(w http.ResponseWriter, r *http.Request) {
-	p.renderPage(w, tmplStartPageHTML, nil, r)
+	session, _ := config.Store.Get(r, config.GetSessionName())
+	performerId := session.Values[config.SessionPerformerKey].(int)
+	performerRole := session.Values[config.SessionRoleKey].(int)
+
+	data := struct {
+		PerformerId   int
+		PerformerRole int
+	}{
+		PerformerId:   performerId,
+		PerformerRole: performerRole,
+	}
+
+	p.renderPage(w, tmplStartPageHTML, data, r)
 }
 
 func (p *PerformerHandlerHTML) renderErrorPage(w http.ResponseWriter, statusCode int, msgCode string, r *http.Request) {
