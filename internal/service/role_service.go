@@ -6,7 +6,6 @@ import (
 	"FGW_WEB/pkg/common"
 	"FGW_WEB/pkg/common/msg"
 	"context"
-	"fmt"
 )
 
 type RoleService struct {
@@ -30,7 +29,7 @@ func (r *RoleService) GetAllRole(ctx context.Context) ([]*model.Role, error) {
 	if err != nil {
 		r.logg.LogE(msg.E3209, err)
 
-		return nil, fmt.Errorf("%s: %v", msg.E3209, err)
+		return nil, err
 	}
 
 	return roles, nil
@@ -40,13 +39,13 @@ func (r *RoleService) UpdRole(ctx context.Context, id int, role *model.Role) err
 	if err := model.ValidateUpdateDataRole(role); err != nil {
 		r.logg.LogE(msg.E3213, err)
 
-		return fmt.Errorf("%s: %v", msg.E3212, err)
+		return err
 	}
 
 	if err := r.roleRepo.UpdById(ctx, id, role); err != nil {
 		r.logg.LogE(msg.E3216, err)
 
-		return fmt.Errorf("%s: %v", msg.E3216, err)
+		return err
 	}
 
 	return nil
@@ -56,13 +55,13 @@ func (r *RoleService) AddRole(ctx context.Context, role *model.Role) error {
 	if err := model.ValidateUpdateDataRole(role); err != nil {
 		r.logg.LogE(msg.E3213, err)
 
-		return fmt.Errorf("%s: %v", msg.E3212, err)
+		return err
 	}
 
 	if err := r.roleRepo.Add(ctx, role); err != nil {
-		r.logg.LogE(msg.E3214, err)
+		r.logg.LogE(msg.E3215, err)
 
-		return fmt.Errorf("%s: %v", msg.E3214, err)
+		return err
 	}
 
 	return nil

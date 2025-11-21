@@ -33,7 +33,7 @@ func (r *RoleRepo) All(ctx context.Context) ([]*model.Role, error) {
 	if err != nil {
 		r.logg.LogE(msg.E3202, err)
 
-		return nil, fmt.Errorf("%s: %v", msg.E3202, err)
+		return nil, err
 	}
 	defer db.RowsClose(rows)
 
@@ -51,7 +51,7 @@ func (r *RoleRepo) All(ctx context.Context) ([]*model.Role, error) {
 		); err != nil {
 			r.logg.LogE(msg.E3204, err)
 
-			return nil, fmt.Errorf("%s: %v", msg.E3204, err)
+			return nil, err
 		}
 
 		roles = append(roles, &role)
@@ -60,7 +60,7 @@ func (r *RoleRepo) All(ctx context.Context) ([]*model.Role, error) {
 	if err = rows.Err(); err != nil {
 		r.logg.LogE(msg.E3205, err)
 
-		return nil, fmt.Errorf("%s: %v", msg.E3205, err)
+		return nil, err
 	}
 
 	return roles, nil
@@ -75,7 +75,7 @@ func (r *RoleRepo) Add(ctx context.Context, role *model.Role) error {
 	); err != nil {
 		r.logg.LogE(msg.E3215, err)
 
-		return fmt.Errorf("%s: %v", msg.E3215, err)
+		return err
 	}
 
 	return nil
@@ -84,9 +84,9 @@ func (r *RoleRepo) Add(ctx context.Context, role *model.Role) error {
 func (r *RoleRepo) UpdById(ctx context.Context, id int, role *model.Role) error {
 	_, err := r.mssql.ExecContext(ctx, FGWsvRoleUpdByIdQuery, id, role.Name, role.Desc, role.AuditRec.UpdatedBy)
 	if err != nil {
-		r.logg.LogE(msg.E3202, err)
+		r.logg.LogE(msg.E3216, err)
 
-		return fmt.Errorf("%s: %v", msg.E3202, err)
+		return err
 	}
 
 	return nil
@@ -104,10 +104,12 @@ func (r *RoleRepo) FindById(ctx context.Context, id int) (*model.Role, error) {
 		&role.AuditRec.UpdatedAt,
 		&role.AuditRec.UpdatedBy,
 	); err != nil {
-		r.logg.LogE(msg.E3202, err)
+		r.logg.LogE(msg.E3204, err)
 
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("%s: %v", msg.E3206, err)
+			r.logg.LogE(msg.E3206, err)
+
+			return nil, err
 		}
 		return nil, fmt.Errorf("%s: %v", msg.E3202, err)
 	}
@@ -122,7 +124,7 @@ func (r *RoleRepo) ExistById(ctx context.Context, id int) (bool, error) {
 	if err != nil {
 		r.logg.LogE(msg.E3206, err)
 
-		return false, fmt.Errorf("%s: %v", msg.E3206, err)
+		return false, err
 	}
 
 	return exists, nil

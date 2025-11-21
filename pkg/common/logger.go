@@ -15,7 +15,7 @@ const (
 	// SkipNumOfStackFrame количество кадров стека, которые необходимо пропустить перед записью на ПК, где 0 идентифицирует
 	// кадр для самих вызывающих абонентов, а 1 идентифицирует вызывающего абонента. Возвращает количество записей,
 	// записанных на компьютер.
-	SkipNumOfStackFrame    = 7
+	SkipNumOfStackFrame    = 5
 	CodeLength             = 6 // CodeLength извлечение подстроки из поля.
 	DefaultMaxStackFrames  = 15
 	DefaultFilePermissions = 0644
@@ -106,7 +106,7 @@ func (l *Logger) LogE(msg string, err error) {
 	l.logCustom(LogLevelError, msg, errStr, nil)
 }
 
-func (l *Logger) LogWithResponseI(msg string, statusCode int, method, url string) {
+func (l *Logger) LogHttpI(msg string, statusCode int, method, url string) {
 	response := &ResponseEntry{
 		StatusCode: statusCode,
 		MethodHTTP: method,
@@ -115,7 +115,7 @@ func (l *Logger) LogWithResponseI(msg string, statusCode int, method, url string
 	l.logCustom(LogLevelInfo, msg, nil, response)
 }
 
-func (l *Logger) LogWithResponseE(msg string, statusCode int, method, url string) {
+func (l *Logger) LogHttpErr(msg string, statusCode int, method, url string) {
 	response := &ResponseEntry{
 		StatusCode: statusCode,
 		MethodHTTP: method,

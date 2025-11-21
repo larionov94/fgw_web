@@ -6,8 +6,6 @@ import (
 	"FGW_WEB/pkg/common"
 	"FGW_WEB/pkg/common/msg"
 	"context"
-	"errors"
-	"fmt"
 )
 
 type PerformerService struct {
@@ -32,7 +30,7 @@ func (p *PerformerService) GetAllPerformers(ctx context.Context) ([]*model.Perfo
 	if err != nil {
 		p.logg.LogE(msg.E3209, err)
 
-		return nil, fmt.Errorf("%s: %v", msg.E3209, err)
+		return nil, err
 	}
 
 	return performers, nil
@@ -42,25 +40,25 @@ func (p *PerformerService) AuthPerformer(ctx context.Context, id int, password s
 	if id <= 0 || password == "" {
 		p.logg.LogE(msg.E3211, nil)
 
-		return &model.AuthPerformer{Success: false, Message: msg.E3211}, errors.New("ТН или пароль не должны быть пустыми")
+		return &model.AuthPerformer{Success: false, Message: msg.E3211}, nil
 	}
 
 	authOK, err := p.performerRepo.AuthByIdAndPass(ctx, id, password)
 	if err != nil {
 		p.logg.LogE(msg.E3210, err)
 
-		return &model.AuthPerformer{Success: false, Message: msg.E3210 + " AuthPerformer.AuthByIdAndPass()"}, err
+		return &model.AuthPerformer{Success: false, Message: msg.E3210}, err
 	}
 
 	if !authOK {
 		p.logg.LogE(msg.E3210, err)
 
-		return &model.AuthPerformer{Success: false, Message: msg.E3210 + " AuthPerformer.AuthByIdAndPass()"}, err
+		return &model.AuthPerformer{Success: false, Message: msg.E3210}, err
 	}
 
 	performer, err := p.performerRepo.FindById(ctx, id)
 	if err != nil {
-		return &model.AuthPerformer{Success: false, Message: msg.E3212 + "AuthPerformer.FindById"}, err
+		return &model.AuthPerformer{Success: false, Message: msg.E3212}, err
 	}
 
 	return &model.AuthPerformer{
@@ -74,13 +72,13 @@ func (p *PerformerService) UpdPerformer(ctx context.Context, id int, performer *
 	if err := model.ValidateUpdateDataPerformer(performer); err != nil {
 		p.logg.LogE(msg.E3213, err)
 
-		return fmt.Errorf("%s: %v", msg.E3213, err)
+		return err
 	}
 
 	if err := p.performerRepo.UpdById(ctx, id, performer); err != nil {
 		p.logg.LogE(msg.E3216, err)
 
-		return fmt.Errorf("%s: %v", msg.E3216, err)
+		return err
 	}
 
 	return nil
@@ -89,9 +87,9 @@ func (p *PerformerService) UpdPerformer(ctx context.Context, id int, performer *
 func (p *PerformerService) FindByIdPerformer(ctx context.Context, id int) (*model.Performer, error) {
 	performer, err := p.performerRepo.FindById(ctx, id)
 	if err != nil {
-		p.logg.LogE(msg.E3216, err)
+		p.logg.LogE(msg.E3212, err)
 
-		return nil, fmt.Errorf("%s: %v", msg.E3216, err)
+		return nil, err
 	}
 
 	return performer, nil

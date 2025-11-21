@@ -64,7 +64,9 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 
 	performers, err := p.performerService.GetAllPerformers(r.Context())
 	if err != nil {
-		http_err.WriteServerError(w, r, p.logg, msg.H7001, err.Error())
+		p.logg.LogHttpErr("T1000 Тест", http.StatusInternalServerError, r.Method, r.URL.Path)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		//http_err.WriteServerError(w, r, p.logg, msg.H7001, err.Error())
 
 		return
 	}
@@ -277,7 +279,7 @@ func (p *PerformerHandlerHTML) renderErrorPage(w http.ResponseWriter, statusCode
 	}
 
 	w.WriteHeader(statusCode)
-	p.logg.LogWithResponseE(msgCode, statusCode, r.Method, r.URL.Path)
+	p.logg.LogHttpErr(msgCode, statusCode, r.Method, r.URL.Path)
 	p.renderPage(w, tmplErrorHTML, data, r)
 }
 

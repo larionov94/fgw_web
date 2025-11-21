@@ -34,7 +34,7 @@ func (p *PerformerRepo) All(ctx context.Context) ([]*model.Performer, error) {
 	if err != nil {
 		p.logg.LogE(msg.E3202, err)
 
-		return nil, fmt.Errorf("%s: %v", msg.E3202, err)
+		return nil, err
 	}
 	defer db.RowsClose(rows)
 
@@ -56,7 +56,7 @@ func (p *PerformerRepo) All(ctx context.Context) ([]*model.Performer, error) {
 		); err != nil {
 			p.logg.LogE(msg.E3204, err)
 
-			return nil, fmt.Errorf("%s: %v", msg.E3204, err)
+			return nil, err
 		}
 
 		performers = append(performers, &performer)
@@ -65,7 +65,7 @@ func (p *PerformerRepo) All(ctx context.Context) ([]*model.Performer, error) {
 	if err = rows.Err(); err != nil {
 		p.logg.LogE(msg.E3205, err)
 
-		return nil, fmt.Errorf("%s: %v", msg.E3205, err)
+		return nil, err
 	}
 
 	return performers, nil
@@ -79,7 +79,7 @@ func (p *PerformerRepo) AuthByIdAndPass(ctx context.Context, id int, password st
 	if err != nil {
 		p.logg.LogE(msg.E3202, err)
 
-		return false, fmt.Errorf("%s: %v", msg.E3202, err)
+		return false, err
 	}
 
 	return authSuccess, nil
@@ -102,12 +102,12 @@ func (p *PerformerRepo) FindById(ctx context.Context, id int) (*model.Performer,
 		&performer.AuditRec.UpdatedAt,
 		&performer.AuditRec.UpdatedBy,
 	); err != nil {
-		p.logg.LogE(msg.E3202, err)
+		p.logg.LogE(msg.E3204, err)
 
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("%s: %v", msg.E3206, err)
 		}
-		return nil, fmt.Errorf("%s: %v", msg.E3202, err)
+		return nil, err
 	}
 
 	return &performer, nil
@@ -120,7 +120,7 @@ func (p *PerformerRepo) UpdById(ctx context.Context, id int, performer *model.Pe
 	if err != nil {
 		p.logg.LogE(msg.E3202, err)
 
-		return fmt.Errorf("%s: %v", msg.E3202, err)
+		return err
 	}
 
 	return nil
@@ -134,7 +134,7 @@ func (p *PerformerRepo) ExistById(ctx context.Context, id int) (bool, error) {
 	if err != nil {
 		p.logg.LogE(msg.E3206, err)
 
-		return false, fmt.Errorf("%s: %v", msg.E3206, err)
+		return false, err
 	}
 
 	return exists, nil

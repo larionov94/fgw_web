@@ -404,7 +404,7 @@ func TestLogger_LogWithResponseE(t *testing.T) {
 				infoPC:   tt.fields.infoPC,
 				filePath: tt.fields.filePath,
 			}
-			l.LogWithResponseE(tt.args.msg, tt.args.statusCode, tt.args.method, tt.args.url)
+			l.LogHttpErr(tt.args.msg, tt.args.statusCode, tt.args.method, tt.args.url)
 			l.file.Close()
 		})
 	}
@@ -451,7 +451,7 @@ func TestLogger_LogWithResponseI(t *testing.T) {
 				infoPC:   tt.fields.infoPC,
 				filePath: tt.fields.filePath,
 			}
-			l.LogWithResponseI(tt.args.msg, tt.args.statusCode, tt.args.method, tt.args.url)
+			l.LogHttpI(tt.args.msg, tt.args.statusCode, tt.args.method, tt.args.url)
 			l.file.Close()
 		})
 	}

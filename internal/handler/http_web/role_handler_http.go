@@ -181,7 +181,7 @@ func (r *RoleHandlerHTML) renderErrorPage(w http.ResponseWriter, statusCode int,
 	}
 
 	w.WriteHeader(statusCode)
-	r.logg.LogWithResponseE(msgCode, statusCode, req.Method, req.URL.Path)
+	r.logg.LogHttpErr(msgCode, statusCode, req.Method, req.URL.Path)
 	r.renderPage(w, tmplErrorHTML, data, req)
 }
 
