@@ -2,30 +2,23 @@ package http_err
 
 import (
 	"FGW_WEB/pkg/common"
+	"fmt"
 	"net/http"
 )
 
-func WriteServerError(w http.ResponseWriter, r *http.Request, logg *common.Logger, message, err string) {
-	http.Error(w, message, http.StatusInternalServerError)
-	logg.LogHttpErr(message+err, http.StatusInternalServerError, r.Method, r.URL.Path)
-}
+const (
+	// SkipNumOfStackFrame количество кадров стека, которые необходимо пропустить перед записью на ПК, где 0 идентифицирует
+	// кадр для самих вызывающих абонентов, а 1 идентифицирует вызывающего абонента. Возвращает количество записей,
+	// записанных на компьютер.
+	skipNumOfStackFrame = 3
+)
 
-func WriteMethodNotAllowed(w http.ResponseWriter, r *http.Request, logg *common.Logger, message, err string) {
-	http.Error(w, message, http.StatusMethodNotAllowed)
-	logg.LogHttpErr(message+err, http.StatusMethodNotAllowed, r.Method, r.URL.Path)
-}
+func SendErrorHTTP(w http.ResponseWriter, statusCode int, msgErr string, logg *common.Logger, r *http.Request) {
+	_, fileName, lineCode, _ := common.FileWithFuncAndLineNum(skipNumOfStackFrame)
 
-func WriteUnauthorized(w http.ResponseWriter, r *http.Request, logg *common.Logger, message, err string) {
-	http.Error(w, message, http.StatusUnauthorized)
-	logg.LogHttpErr(message+err, http.StatusUnauthorized, r.Method, r.URL.Path)
-}
+	result := fmt.Sprintf("H7777 %s --- %s:%d", msgErr, fileName, lineCode)
 
-func WriteBadRequest(w http.ResponseWriter, r *http.Request, logg *common.Logger, message, err string) {
-	http.Error(w, message, http.StatusBadRequest)
-	logg.LogHttpErr(message+err, http.StatusBadRequest, r.Method, r.URL.Path)
-}
+	logg.LogHttpErr(result, statusCode, r.Method, r.URL.Path)
+	http.Error(w, fmt.Sprintf(" %s", msgErr), statusCode)
 
-func WriteForbidden(w http.ResponseWriter, r *http.Request, logg *common.Logger, message, err string) {
-	http.Error(w, message, http.StatusForbidden)
-	logg.LogHttpErr(message+err, http.StatusForbidden, r.Method, r.URL.Path)
 }

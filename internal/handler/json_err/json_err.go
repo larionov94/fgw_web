@@ -10,17 +10,18 @@ const (
 	// SkipNumOfStackFrame количество кадров стека, которые необходимо пропустить перед записью на ПК, где 0 идентифицирует
 	// кадр для самих вызывающих абонентов, а 1 идентифицирует вызывающего абонента. Возвращает количество записей,
 	// записанных на компьютер.
-	SkipNumOfStackFrame = 3
+	skipNumOfStackFrame = 3
 )
 
-func SendErrorResponse(w http.ResponseWriter, statusCode int, msgCode string, r *http.Request) {
-	funcName, fileName, lineNumber, filePath := common.FileWithFuncAndLineNum(SkipNumOfStackFrame)
+func SendErrorResponse(w http.ResponseWriter, statusCode int, msgCode string, msg string, r *http.Request) {
+	funcName, fileName, lineNumber, filePath := common.FileWithFuncAndLineNum(skipNumOfStackFrame)
 
 	errorResponse := struct {
 		Error       string               `json:"error"`
 		Code        int                  `json:"code"`
 		Description common.ResponseEntry `json:"description"`
 		Detail      common.DetailEntry   `json:"detail"`
+		Message     string               `json:"message"`
 	}{
 		msgCode,
 		statusCode,
@@ -35,6 +36,7 @@ func SendErrorResponse(w http.ResponseWriter, statusCode int, msgCode string, r 
 			LineNumber:   lineNumber,
 			PathToFile:   filePath,
 		},
+		msg,
 	}
 
 	w.WriteHeader(statusCode)

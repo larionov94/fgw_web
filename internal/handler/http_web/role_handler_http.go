@@ -30,14 +30,14 @@ func (r *RoleHandlerHTML) AllRoleHTML(w http.ResponseWriter, req *http.Request) 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	if req.Method != http.MethodGet {
-		http_err.WriteMethodNotAllowed(w, req, r.logg, msg.H7000, "")
+		http_err.SendErrorHTTP(w, http.StatusMethodNotAllowed, "", r.logg, req)
 
 		return
 	}
 
 	roles, err := r.roleService.GetAllRole(req.Context())
 	if err != nil {
-		http_err.WriteServerError(w, req, r.logg, msg.H7001, err.Error())
+		http_err.SendErrorHTTP(w, http.StatusInternalServerError, err.Error(), r.logg, req)
 
 		return
 	}
@@ -61,7 +61,7 @@ func (r *RoleHandlerHTML) AddRoleHTML(w http.ResponseWriter, req *http.Request) 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	if req.Method != http.MethodPost {
-		http_err.WriteMethodNotAllowed(w, req, r.logg, msg.H7000, "")
+		http_err.SendErrorHTTP(w, http.StatusMethodNotAllowed, "", r.logg, req)
 
 		return
 	}
@@ -90,7 +90,7 @@ func (r *RoleHandlerHTML) AddRoleHTML(w http.ResponseWriter, req *http.Request) 
 	}
 
 	if err := r.roleService.AddRole(req.Context(), role); err != nil {
-		http_err.WriteServerError(w, req, r.logg, msg.H7002, err.Error())
+		http_err.SendErrorHTTP(w, http.StatusInternalServerError, err.Error(), r.logg, req)
 
 		return
 	}
@@ -105,7 +105,7 @@ func (r *RoleHandlerHTML) UpdRoleHTML(w http.ResponseWriter, req *http.Request) 
 	case http.MethodGet:
 		r.renderUpdFormRole(w, req)
 	default:
-		http_err.WriteMethodNotAllowed(w, req, r.logg, msg.H7000, "")
+		http_err.SendErrorHTTP(w, http.StatusMethodNotAllowed, "", r.logg, req)
 	}
 }
 
@@ -118,7 +118,7 @@ func (r *RoleHandlerHTML) processUpdFormRole(w http.ResponseWriter, req *http.Re
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	if err := req.ParseForm(); err != nil {
-		http_err.WriteServerError(w, req, r.logg, msg.H7003, err.Error())
+		http_err.SendErrorHTTP(w, http.StatusInternalServerError, err.Error(), r.logg, req)
 
 		return
 	}
@@ -148,7 +148,7 @@ func (r *RoleHandlerHTML) processUpdFormRole(w http.ResponseWriter, req *http.Re
 	}
 
 	if err := r.roleService.UpdRole(req.Context(), roleId, role); err != nil {
-		http_err.WriteServerError(w, req, r.logg, msg.H7004, err.Error())
+		http_err.SendErrorHTTP(w, http.StatusInternalServerError, err.Error(), r.logg, req)
 
 		return
 	}

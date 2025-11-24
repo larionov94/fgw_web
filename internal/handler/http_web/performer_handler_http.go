@@ -36,10 +36,10 @@ func NewPerformerHandlerHTML(performerService service.PerformerUseCase, roleServ
 
 func (p *PerformerHandlerHTML) ServeHTTPHTMLRouter(mux *http.ServeMux) {
 	mux.HandleFunc("/", p.ShowAuthForm)
-	mux.HandleFunc("/fgw/performers", p.authMiddleware.RequireAuth(p.authMiddleware.RequireRole([]int{3}, p.AllPerformersHTML)))
 	mux.HandleFunc("/login", p.AuthPerformerHTML)
 	mux.HandleFunc("/logout", p.Logout)
 	mux.HandleFunc("/fgw", p.authMiddleware.RequireAuth(p.StartPage))
+	mux.HandleFunc("/fgw/performers", p.authMiddleware.RequireAuth(p.authMiddleware.RequireRole([]int{3}, p.AllPerformersHTML)))
 	mux.HandleFunc("/fgw/performers/upd", p.authMiddleware.RequireAuth(p.authMiddleware.RequireRole([]int{3}, p.UpdPerformerHTML)))
 }
 
@@ -57,23 +57,21 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	if r.Method != http.MethodGet {
-		http_err.WriteMethodNotAllowed(w, r, p.logg, msg.H7000, "")
+		http_err.SendErrorHTTP(w, http.StatusMethodNotAllowed, "", p.logg, r)
 
 		return
 	}
 
 	performers, err := p.performerService.GetAllPerformers(r.Context())
 	if err != nil {
-		p.logg.LogHttpErr("T1000 Тест", http.StatusInternalServerError, r.Method, r.URL.Path)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		//http_err.WriteServerError(w, r, p.logg, msg.H7001, err.Error())
+		http_err.SendErrorHTTP(w, http.StatusInternalServerError, err.Error(), p.logg, r)
 
 		return
 	}
 
 	roles, err := p.roleService.GetAllRole(r.Context())
 	if err != nil {
-		http_err.WriteServerError(w, r, p.logg, msg.H7001, err.Error())
+		http_err.SendErrorHTTP(w, http.StatusInternalServerError, err.Error(), p.logg, r)
 
 		return
 	}
@@ -115,7 +113,7 @@ func (p *PerformerHandlerHTML) AuthPerformerHTML(w http.ResponseWriter, r *http.
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	if r.Method != http.MethodPost {
-		http_err.WriteMethodNotAllowed(w, r, p.logg, msg.H7000, "")
+		http_err.SendErrorHTTP(w, http.StatusMethodNotAllowed, "", p.logg, r)
 
 		return
 	}
@@ -172,7 +170,7 @@ func (p *PerformerHandlerHTML) UpdPerformerHTML(w http.ResponseWriter, r *http.R
 	case http.MethodGet:
 		p.renderUpdFormPerformer(w, r)
 	default:
-		http_err.WriteMethodNotAllowed(w, r, p.logg, msg.H7000, "")
+		http_err.SendErrorHTTP(w, http.StatusMethodNotAllowed, "", p.logg, r)
 	}
 }
 
@@ -195,29 +193,29 @@ func (p *PerformerHandlerHTML) processUpdFormPerformer(w http.ResponseWriter, r 
 	idRoleAFGWStr := r.FormValue("idRoleAFGW")
 	updatedByStr := r.FormValue("updatedBy")
 
-	//if idRoleAFormsStr == "" || idRoleAFGWStr == "" || updatedByStr == "" {
-	//	p.renderErrorPage(w, http.StatusUnauthorized, msg.E3214, r)
-	//
-	//	return
-	//}
+	if idRoleAFormsStr == "" || idRoleAFGWStr == "" || updatedByStr == "" {
+		p.renderErrorPage(w, http.StatusUnauthorized, msg.E3214, r)
+
+		return
+	}
 
 	performerId := convert.ConvStrToInt(performerIdStr)
 	updatedBy := convert.ConvStrToInt(updatedByStr)
 	idRoleAForms := convert.ConvStrToInt(idRoleAFormsStr)
 	idRoleAFGW := convert.ConvStrToInt(idRoleAFGWStr)
 
-	//exists, err := p.performerService.ExistPerformer(r.Context(), performerId)
-	//if err != nil {
-	//	http_err.WriteServerError(w, r, p.logg, msg.H7008, err.Error())
-	//
-	//	return
-	//}
-	//
-	//if !exists {
-	//	p.renderErrorPage(w, http.StatusUnauthorized, msg.E3212, r)
-	//
-	//	return
-	//}
+	exists, err := p.performerService.ExistPerformer(r.Context(), performerId)
+	if err != nil {
+		http_err.SendErrorHTTP(w, http.StatusInternalServerError, err.Error(), p.logg, r)
+
+		return
+	}
+
+	if !exists {
+		p.renderErrorPage(w, http.StatusUnauthorized, msg.E3212, r)
+
+		return
+	}
 
 	performer := model.Performer{
 		Id:           performerId,
@@ -230,7 +228,7 @@ func (p *PerformerHandlerHTML) processUpdFormPerformer(w http.ResponseWriter, r 
 	}
 
 	if err := p.performerService.UpdPerformer(r.Context(), performerId, &performer); err != nil {
-		http_err.WriteServerError(w, r, p.logg, msg.H7007, err.Error())
+		http_err.SendErrorHTTP(w, http.StatusInternalServerError, err.Error(), p.logg, r)
 
 		return
 	}

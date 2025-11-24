@@ -62,7 +62,7 @@ func (m *AuthMiddleware) RequireRole(requireRoles []int, next http.HandlerFunc) 
 		}
 
 		if !allowedRoles[performerRole] {
-			http_err.WriteForbidden(w, r, m.logg, "", "Доступ запрещен: недостаточно прав.")
+			http_err.SendErrorHTTP(w, http.StatusForbidden, "Доступ запрещен: недостаточно прав.", m.logg, r)
 
 			return
 		}

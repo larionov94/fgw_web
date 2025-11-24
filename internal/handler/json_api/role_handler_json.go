@@ -30,14 +30,14 @@ func (r *RoleHandlerJSON) AllRoleJSON(w http.ResponseWriter, req *http.Request) 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	if req.Method != http.MethodGet {
-		json_err.SendErrorResponse(w, http.StatusMethodNotAllowed, msg.H7000, req)
+		json_err.SendErrorResponse(w, http.StatusMethodNotAllowed, msg.H7000, "", req)
 
 		return
 	}
 
 	roles, err := r.roleService.GetAllRole(req.Context())
 	if err != nil {
-		json_err.SendErrorResponse(w, http.StatusInternalServerError, msg.H7001, req)
+		json_err.SendErrorResponse(w, http.StatusInternalServerError, msg.H7001, err.Error(), req)
 
 		return
 	}
@@ -45,37 +45,35 @@ func (r *RoleHandlerJSON) AllRoleJSON(w http.ResponseWriter, req *http.Request) 
 	if len(roles) == 0 {
 		w.WriteHeader(http.StatusNoContent)
 		if err = json.NewEncoder(w).Encode(&model.RoleList{Roles: []*model.Role{}}); err != nil {
+			json_err.SendErrorResponse(w, http.StatusNoContent, msg.H7009, err.Error(), req)
+
 			return
 		}
 	}
 
 	data := model.RoleList{Roles: roles}
 
-	if err = json.NewEncoder(w).Encode(&data); err != nil {
-		json_err.SendErrorResponse(w, http.StatusInternalServerError, msg.H7001, req)
-
-		return
-	}
+	WriteJSON(w, &data, req)
 }
 
 func (r *RoleHandlerJSON) AddRoleJSON(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	if req.Method != http.MethodPost {
-		json_err.SendErrorResponse(w, http.StatusMethodNotAllowed, msg.H7000, req)
+		json_err.SendErrorResponse(w, http.StatusMethodNotAllowed, msg.H7000, "", req)
 
 		return
 	}
 
 	var role model.Role
 	if err := json.NewDecoder(req.Body).Decode(&role); err != nil {
-		json_err.SendErrorResponse(w, http.StatusBadRequest, msg.H7004, req)
+		json_err.SendErrorResponse(w, http.StatusBadRequest, msg.H7004, err.Error(), req)
 
 		return
 	}
 
 	if err := r.roleService.AddRole(req.Context(), &role); err != nil {
-		json_err.SendErrorResponse(w, http.StatusInternalServerError, msg.H7003, req)
+		json_err.SendErrorResponse(w, http.StatusInternalServerError, msg.H7001, err.Error(), req)
 
 		return
 	}
@@ -87,7 +85,7 @@ func (r *RoleHandlerJSON) UpdRoleJSON(w http.ResponseWriter, req *http.Request) 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	if req.Method != http.MethodPut {
-		json_err.SendErrorResponse(w, http.StatusMethodNotAllowed, msg.H7000, req)
+		json_err.SendErrorResponse(w, http.StatusMethodNotAllowed, msg.H7000, "", req)
 
 		return
 	}
@@ -97,26 +95,26 @@ func (r *RoleHandlerJSON) UpdRoleJSON(w http.ResponseWriter, req *http.Request) 
 
 	var role model.Role
 	if err := json.NewDecoder(req.Body).Decode(&role); err != nil {
-		json_err.SendErrorResponse(w, http.StatusBadRequest, msg.H7004, req)
+		json_err.SendErrorResponse(w, http.StatusBadRequest, msg.H7004, err.Error(), req)
 
 		return
 	}
 
 	exists, err := r.roleService.ExistRole(req.Context(), roleId)
 	if err != nil {
-		json_err.SendErrorResponse(w, http.StatusInternalServerError, msg.H7005, req)
+		json_err.SendErrorResponse(w, http.StatusInternalServerError, msg.H7001, err.Error(), req)
 
 		return
 	}
 
 	if !exists {
-		json_err.SendErrorResponse(w, http.StatusNotFound, msg.H7008, req)
+		json_err.SendErrorResponse(w, http.StatusNotFound, msg.H7008, "", req)
 
 		return
 	}
 
 	if err = r.roleService.UpdRole(req.Context(), roleId, &role); err != nil {
-		json_err.SendErrorResponse(w, http.StatusInternalServerError, msg.H7006, req)
+		json_err.SendErrorResponse(w, http.StatusInternalServerError, msg.H7001, err.Error(), req)
 
 		return
 	}

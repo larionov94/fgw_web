@@ -115,6 +115,10 @@ func (l *Logger) LogHttpI(msg string, statusCode int, method, url string) {
 	l.logCustom(LogLevelInfo, msg, nil, response)
 }
 
+func (l *Logger) LogHttpJsonE(msgJson string) {
+	l.logCustom(LogLevelError, msgJson, nil, nil)
+}
+
 func (l *Logger) LogHttpErr(msg string, statusCode int, method, url string) {
 	response := &ResponseEntry{
 		StatusCode: statusCode,
@@ -132,7 +136,7 @@ func (l *Logger) logCustom(level LogLevel, message string, errStr *string, respo
 		Level:           level,
 		Message:         l.createMessage(message, errStr),
 		ResponseMessage: response,
-		Detail:          l.createDetails(),
+		Detail:          l.createDetails(SkipNumOfStackFrame),
 	}
 
 	if err := l.writeEntry(entry); err != nil {
@@ -151,8 +155,8 @@ func (l *Logger) createMessage(msg string, errStr *string) MessageEntry {
 }
 
 // createDetails создает и заполняет информацию о месте вызова.
-func (l *Logger) createDetails() *DetailEntry {
-	funcName, fileName, lineNumber, filePath := FileWithFuncAndLineNum(SkipNumOfStackFrame)
+func (l *Logger) createDetails(skipNumOfStackFrame int) *DetailEntry {
+	funcName, fileName, lineNumber, filePath := FileWithFuncAndLineNum(skipNumOfStackFrame)
 	return &DetailEntry{
 		FunctionName: funcName,
 		FileName:     fileName,
@@ -170,10 +174,6 @@ func splitCodeMessage(msg string) (string, string) {
 
 	return msg[:CodeLength-1], msg[CodeLength:]
 }
-
-//func FileWithFuncAndLineNumToString(skipNumOfStack int) string {
-//	return fmt.Sprintf(FileWithFuncAndLineNum(skipNumOfStack))
-//}
 
 // FileWithFuncAndLineNum возвращает имя функции, имя файла, номер строки, путь файла.
 func FileWithFuncAndLineNum(skipNumOfStack int) (string, string, int, string) {
