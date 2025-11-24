@@ -12,10 +12,10 @@ import (
 )
 
 const (
-	// SkipNumOfStackFrame количество кадров стека, которые необходимо пропустить перед записью на ПК, где 0 идентифицирует
+	// skipNumOfStackFrame количество кадров стека, которые необходимо пропустить перед записью на ПК, где 0 идентифицирует
 	// кадр для самих вызывающих абонентов, а 1 идентифицирует вызывающего абонента. Возвращает количество записей,
 	// записанных на компьютер.
-	SkipNumOfStackFrame    = 5
+	skipNumOfStackFrame    = 5
 	CodeLength             = 6 // CodeLength извлечение подстроки из поля.
 	DefaultMaxStackFrames  = 15
 	DefaultFilePermissions = 0644
@@ -115,10 +115,6 @@ func (l *Logger) LogHttpI(msg string, statusCode int, method, url string) {
 	l.logCustom(LogLevelInfo, msg, nil, response)
 }
 
-func (l *Logger) LogHttpJsonE(msgJson string) {
-	l.logCustom(LogLevelError, msgJson, nil, nil)
-}
-
 func (l *Logger) LogHttpErr(msg string, statusCode int, method, url string) {
 	response := &ResponseEntry{
 		StatusCode: statusCode,
@@ -136,7 +132,7 @@ func (l *Logger) logCustom(level LogLevel, message string, errStr *string, respo
 		Level:           level,
 		Message:         l.createMessage(message, errStr),
 		ResponseMessage: response,
-		Detail:          l.createDetails(SkipNumOfStackFrame),
+		Detail:          l.createDetails(skipNumOfStackFrame),
 	}
 
 	if err := l.writeEntry(entry); err != nil {

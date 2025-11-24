@@ -36,7 +36,8 @@ func NewPerformerHandlerHTML(performerService service.PerformerUseCase, roleServ
 
 func (p *PerformerHandlerHTML) ServeHTTPHTMLRouter(mux *http.ServeMux) {
 	mux.HandleFunc("/", p.ShowAuthForm)
-	mux.HandleFunc("/login", p.AuthPerformerHTML)
+	mux.HandleFunc("/login", p.LoginPage)
+	mux.HandleFunc("/auth", p.AuthPerformerHTML)
 	mux.HandleFunc("/logout", p.Logout)
 	mux.HandleFunc("/fgw", p.authMiddleware.RequireAuth(p.StartPage))
 	mux.HandleFunc("/fgw/performers", p.authMiddleware.RequireAuth(p.authMiddleware.RequireRole([]int{3}, p.AllPerformersHTML)))
@@ -51,6 +52,24 @@ func (p *PerformerHandlerHTML) ShowAuthForm(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	p.renderPage(w, tmplAuthHTML, nil, r)
+}
+
+func (p *PerformerHandlerHTML) LoginPage(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	if r.Method != http.MethodGet {
+		http_err.SendErrorHTTP(w, http.StatusMethodNotAllowed, "", p.logg, r)
+		return
+	}
+	errorMsg := r.URL.Query().Get("error")
+
+	data := struct {
+		ErrorMessage string
+	}{
+		ErrorMessage: errorMsg,
+	}
+
+	p.renderPage(w, tmplAuthHTML, data, r)
 }
 
 func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.Request) {
@@ -138,9 +157,9 @@ func (p *PerformerHandlerHTML) AuthPerformerHTML(w http.ResponseWriter, r *http.
 	authResult, err := p.performerService.AuthPerformer(r.Context(), performerId, performerPass)
 	if err != nil {
 		if authResult != nil && !authResult.Success {
-			p.renderErrorPage(w, http.StatusUnauthorized, authResult.Message, r)
+			http.Redirect(w, r, "/login?error="+url.QueryEscape(authResult.Message), http.StatusFound)
 		} else {
-			p.renderErrorPage(w, http.StatusUnauthorized, msg.H7005, r)
+			http.Redirect(w, r, "/login?error="+url.QueryEscape(msg.H7005), http.StatusFound)
 		}
 		return
 	}
@@ -154,12 +173,12 @@ func (p *PerformerHandlerHTML) AuthPerformerHTML(w http.ResponseWriter, r *http.
 		err = session.Save(r, w)
 		if err != nil {
 			p.renderErrorPage(w, http.StatusInternalServerError, "Ошибка создания сессии", r)
-
 			return
 		}
 		http.Redirect(w, r, "/fgw", http.StatusFound)
 	} else {
-		http.Redirect(w, r, "/login?error"+url.QueryEscape(authResult.Message), http.StatusFound)
+		// Исправлено: добавлен знак = после error
+		http.Redirect(w, r, "/login?error="+url.QueryEscape(authResult.Message), http.StatusFound)
 	}
 }
 
