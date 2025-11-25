@@ -1,7 +1,6 @@
 package http_web
 
 import (
-	"FGW_WEB/internal/config"
 	"FGW_WEB/internal/handler"
 	"FGW_WEB/internal/handler/http_err"
 	"FGW_WEB/internal/model"
@@ -11,7 +10,6 @@ import (
 	"FGW_WEB/pkg/convert"
 	"html/template"
 	"net/http"
-	"net/url"
 	"time"
 )
 
@@ -35,41 +33,8 @@ func NewPerformerHandlerHTML(performerService service.PerformerUseCase, roleServ
 }
 
 func (p *PerformerHandlerHTML) ServeHTTPHTMLRouter(mux *http.ServeMux) {
-	mux.HandleFunc("/", p.ShowAuthForm)
-	mux.HandleFunc("/login", p.LoginPage)
-	mux.HandleFunc("/auth", p.AuthPerformerHTML)
-	mux.HandleFunc("/logout", p.Logout)
-	mux.HandleFunc("/fgw", p.authMiddleware.RequireAuth(p.StartPage))
 	mux.HandleFunc("/fgw/performers", p.authMiddleware.RequireAuth(p.authMiddleware.RequireRole([]int{3}, p.AllPerformersHTML)))
 	mux.HandleFunc("/fgw/performers/upd", p.authMiddleware.RequireAuth(p.authMiddleware.RequireRole([]int{3}, p.UpdPerformerHTML)))
-}
-
-func (p *PerformerHandlerHTML) ShowAuthForm(w http.ResponseWriter, r *http.Request) {
-	performerId, ok := p.authMiddleware.GetPerformerId(r)
-	if ok && performerId > 0 {
-		http.Redirect(w, r, "/fgw", http.StatusFound)
-
-		return
-	}
-	p.renderPage(w, tmplAuthHTML, nil, r)
-}
-
-func (p *PerformerHandlerHTML) LoginPage(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-	if r.Method != http.MethodGet {
-		http_err.SendErrorHTTP(w, http.StatusMethodNotAllowed, "", p.logg, r)
-		return
-	}
-	errorMsg := r.URL.Query().Get("error")
-
-	data := struct {
-		ErrorMessage string
-	}{
-		ErrorMessage: errorMsg,
-	}
-
-	p.renderPage(w, tmplAuthHTML, data, r)
 }
 
 func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.Request) {
@@ -110,76 +75,6 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 	}
 
 	p.renderPage(w, tmplPerformersHTML, data, r)
-}
-
-func (p *PerformerHandlerHTML) Logout(w http.ResponseWriter, r *http.Request) {
-	session, _ := config.Store.Get(r, config.GetSessionName())
-
-	session.Values[config.SessionAuthPerformer] = false
-	session.Values[config.SessionPerformerKey] = nil
-	session.Values[config.SessionRoleKey] = nil
-	session.Options.MaxAge = -1
-
-	err := session.Save(r, w)
-	if err != nil {
-		p.logg.LogE("Ошибка при выходе: ", err)
-	}
-
-	http.Redirect(w, r, "/", http.StatusFound)
-}
-
-func (p *PerformerHandlerHTML) AuthPerformerHTML(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-	if r.Method != http.MethodPost {
-		http_err.SendErrorHTTP(w, http.StatusMethodNotAllowed, "", p.logg, r)
-
-		return
-	}
-
-	if err := r.ParseForm(); err != nil {
-		p.renderErrorPage(w, http.StatusBadRequest, msg.H7007, r)
-
-		return
-	}
-
-	performerIdStr := r.FormValue("performerId")
-	performerPass := r.FormValue("performerPassword")
-
-	if performerIdStr == "" || performerPass == "" {
-		p.renderErrorPage(w, http.StatusUnauthorized, msg.E3211, r)
-
-		return
-	}
-
-	performerId := convert.ConvStrToInt(performerIdStr)
-
-	authResult, err := p.performerService.AuthPerformer(r.Context(), performerId, performerPass)
-	if err != nil {
-		if authResult != nil && !authResult.Success {
-			http.Redirect(w, r, "/login?error="+url.QueryEscape(authResult.Message), http.StatusFound)
-		} else {
-			http.Redirect(w, r, "/login?error="+url.QueryEscape(msg.H7005), http.StatusFound)
-		}
-		return
-	}
-
-	if authResult.Success {
-		session, _ := config.Store.Get(r, config.GetSessionName())
-		session.Values[config.SessionAuthPerformer] = true
-		session.Values[config.SessionPerformerKey] = performerId
-		session.Values[config.SessionRoleKey] = authResult.Performer.IdRoleAForms
-
-		err = session.Save(r, w)
-		if err != nil {
-			p.renderErrorPage(w, http.StatusInternalServerError, "Ошибка создания сессии", r)
-			return
-		}
-		http.Redirect(w, r, "/fgw", http.StatusFound)
-	} else {
-		// Исправлено: добавлен знак = после error
-		http.Redirect(w, r, "/login?error="+url.QueryEscape(authResult.Message), http.StatusFound)
-	}
 }
 
 func (p *PerformerHandlerHTML) UpdPerformerHTML(w http.ResponseWriter, r *http.Request) {
@@ -262,22 +157,6 @@ func (p *PerformerHandlerHTML) markEditingPerformer(id string, performers []*mod
 			performer.IsEditing = true
 		}
 	}
-}
-
-func (p *PerformerHandlerHTML) StartPage(w http.ResponseWriter, r *http.Request) {
-	session, _ := config.Store.Get(r, config.GetSessionName())
-	performerId := session.Values[config.SessionPerformerKey].(int)
-	performerRole := session.Values[config.SessionRoleKey].(int)
-
-	data := struct {
-		PerformerId   int
-		PerformerRole int
-	}{
-		PerformerId:   performerId,
-		PerformerRole: performerRole,
-	}
-
-	p.renderPage(w, tmplStartPageHTML, data, r)
 }
 
 func (p *PerformerHandlerHTML) renderErrorPage(w http.ResponseWriter, statusCode int, msgCode string, r *http.Request) {

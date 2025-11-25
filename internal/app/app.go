@@ -59,6 +59,7 @@ func StartApp() {
 	repoPerformer := repository.NewPerformerRepo(mssqlDB, logger)
 	servicePerformer := service.NewPerformerService(repoPerformer, logger)
 	handlerPerformerJSON := json_api.NewPerformerHandlerJSON(servicePerformer, logger)
+	handlerAuthHTML := http_web.NewAuthHandlerHTML(servicePerformer, serviceRole, logger, authMiddleware)
 	handlerPerformerHTML := http_web.NewPerformerHandlerHTML(servicePerformer, serviceRole, logger, authMiddleware)
 
 	mux := http.NewServeMux()
@@ -68,6 +69,7 @@ func StartApp() {
 
 	handlerPerformerJSON.ServeHTTPJSONRouter(mux)
 	handlerPerformerHTML.ServeHTTPHTMLRouter(mux)
+	handlerAuthHTML.ServerHTTPRouter(mux)
 
 	mux.Handle("/web/", http.StripPrefix("/web/", http.FileServer(http.Dir("web/"))))
 
