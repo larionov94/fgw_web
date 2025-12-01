@@ -1,27 +1,41 @@
-// HTML5 placeholder support for older browsers
-(function() {
-    if (!('placeholder' in document.createElement('input'))) {
-        let inputs = document.querySelectorAll('input[placeholder]');
-        for (var i = 0; i < inputs.length; i++) {
-            var input = inputs[i];
-            var placeholder = input.getAttribute('placeholder');
+// Глобальные обработчики для защиты авторизации
+document.addEventListener('DOMContentLoaded', function() {
+    // Для формы логина
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', function(e) {
+            // Можно добавить дополнительную валидацию
+            const performerId = document.getElementById('performerId');
+            const password = document.getElementById('performerPassword');
 
-            input.value = placeholder;
-            input.style.color = '#999';
+            if (!performerId.value || !password.value) {
+                e.preventDefault();
+                alert('Заполните все поля');
+                return false;
+            }
 
-            input.addEventListener('focus', function() {
-                if (this.value === this.getAttribute('placeholder')) {
-                    this.value = '';
-                    this.style.color = '';
-                }
-            });
+            // Блокируем повторную отправку
+            const submitBtn = this.querySelector('input[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.value = 'Вход...';
+            }
 
-            input.addEventListener('blur', function() {
-                if (this.value === '') {
-                    this.value = this.getAttribute('placeholder');
-                    this.style.color = '#999';
-                }
-            });
-        }
+            return true;
+        });
     }
-})();
+
+    // Защита от вставки пароля
+    const passwordFields = document.querySelectorAll('input[type="password"]');
+    passwordFields.forEach(function(field) {
+        field.addEventListener('copy', function(e) {
+            e.preventDefault();
+            return false;
+        });
+
+        field.addEventListener('paste', function(e) {
+            e.preventDefault();
+            return false;
+        });
+    });
+});

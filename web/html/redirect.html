@@ -1,0 +1,37 @@
+<!-- templates/redirect.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{{.Title}}</title>
+    <script>
+        (function() {
+            {{if .ClearHistory}}
+            // Очищаем историю
+            if (window.history.replaceState) {
+                history.replaceState(null, '', '{{.CurrentURL}}');
+                history.pushState({authed: false}, '', '{{.TempURL}}');
+                history.back();
+            }
+            {{end}}
+
+            // Редирект
+            setTimeout(function() {
+                window.location.replace('{{.TargetURL}}');
+            }, {{.Delay}});
+
+            // Фолбэк
+            setTimeout(function() {
+                window.location.replace('{{.TargetURL}}');
+            }, {{.FallbackDelay}});
+        })();
+    </script>
+</head>
+<body>
+<p>{{.Message}}</p>
+<noscript>
+    <p>{{.NoScriptMessage}}</p>
+    <p><a href="{{.TargetURL}}">Перейти</a></p>
+</noscript>
+</body>
+</html>
