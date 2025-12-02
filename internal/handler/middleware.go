@@ -233,8 +233,16 @@ func (m *AuthMiddleware) forceLogoutAndRedirect(w http.ResponseWriter, r *http.R
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 
+	data := struct {
+		Reason    string
+		Timestamp string
+	}{
+		Reason:    reason,
+		Timestamp: time.Now().Format("02.01.2006 15:04:05"),
+	}
+
 	// Выполняем шаблон.
-	if err = tmpl.Execute(w, nil); err != nil {
+	if err = tmpl.Execute(w, data); err != nil {
 		http.Error(w, "Ошибка рендеринга шаблона", http.StatusInternalServerError)
 	}
 }
