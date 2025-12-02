@@ -1,4 +1,4 @@
-package http_web
+package admin
 
 import (
 	"FGW_WEB/internal/handler/http_err"

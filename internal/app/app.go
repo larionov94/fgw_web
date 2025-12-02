@@ -5,6 +5,7 @@ import (
 	"FGW_WEB/internal/config/db"
 	"FGW_WEB/internal/handler"
 	"FGW_WEB/internal/handler/http_web"
+	"FGW_WEB/internal/handler/http_web/admin"
 	"FGW_WEB/internal/handler/json_api"
 	"FGW_WEB/internal/repository"
 	"FGW_WEB/internal/service"
@@ -54,12 +55,12 @@ func StartApp() {
 	repoRole := repository.NewRoleRepo(mssqlDB, logger)
 	serviceRole := service.NewRoleService(repoRole, logger)
 	handlerRoleJSON := json_api.NewRoleHandlerJSON(serviceRole, logger)
-	handlerRoleHTML := http_web.NewRoleHandlerHTML(serviceRole, logger)
+	handlerRoleHTML := admin.NewRoleHandlerHTML(serviceRole, logger)
 
 	repoPerformer := repository.NewPerformerRepo(mssqlDB, logger)
 	servicePerformer := service.NewPerformerService(repoPerformer, logger)
 	handlerPerformerJSON := json_api.NewPerformerHandlerJSON(servicePerformer, logger)
-	handlerPerformerHTML := http_web.NewPerformerHandlerHTML(servicePerformer, serviceRole, logger, authMiddleware)
+	handlerPerformerHTML := admin.NewPerformerHandlerHTML(servicePerformer, serviceRole, logger, authMiddleware)
 
 	handlerAuthHTML := http_web.NewAuthHandlerHTML(servicePerformer, serviceRole, logger, authMiddleware)
 	handlerAuthJSON := json_api.NewAuthHandlerJSON(servicePerformer, logger)

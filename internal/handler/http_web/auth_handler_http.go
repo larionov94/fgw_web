@@ -25,6 +25,11 @@ const (
 	urlLogin              = "/login"
 	urlLogoutTempRedirect = "/logout-temp-redirect"
 	pathToDefault         = "/"
+	tmplStartPageHTML     = "index.html"
+	tmplErrorHTML         = "error.html"
+
+	// /fgw
+	prefixTmplPerformers = "web/html/"
 )
 
 const (

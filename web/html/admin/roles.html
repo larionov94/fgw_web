@@ -63,7 +63,7 @@
             <tr id="role_{{ .Id }}">
                 <td>{{ .Id }}</td>
                 {{ if .IsEditing }}
-                    <form method="POST" action="/fgw/roles/upd">
+                    <form method="POST" action="/admin/roles/upd">
                         <td>
                             <label>
                                 <input type="text" name="name" value="{{ .Name }}" required>
@@ -95,7 +95,7 @@
                     <td>{{formatDateTime .AuditRec.UpdatedAt}}</td>
                     <td>{{ .AuditRec.UpdatedBy}}</td>
                     <td>
-                        <a href="/fgw/roles?roleId={{ .Id }}#role_{{ .Id }}">Изменить</a>
+                        <a href="/admin/roles?roleId={{ .Id }}#role_{{ .Id }}">Изменить</a>
                     </td>
                 {{ end }}
             </tr>

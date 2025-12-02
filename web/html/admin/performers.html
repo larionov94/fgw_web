@@ -34,7 +34,7 @@
         <tr id="performer_{{ .Id }}" {{if .Archive}}class="archive" {{end}}>
             <td>{{ .Id }}</td>
             {{if .IsEditing}}
-            <form method="POST" action="/fgw/performers/upd">
+            <form method="POST" action="/admin/performers/upd">
                 <td>{{.FIO}}</td>
                 <td>{{.BC}}</td>
                 <td>{{.Pass}}</td>
@@ -108,7 +108,7 @@
             <td>{{formatDateTime .AuditRec.UpdatedAt}}</td>
             <td>{{ .AuditRec.UpdatedBy}}</td>
             <td>
-                <a href="/fgw/performers?performerId={{ .Id }}#performer_{{ .Id }}">Изменить</a>
+                <a href="/admin/performers?performerId={{ .Id }}#performer_{{ .Id }}">Изменить</a>
             </td>
 
             {{end}}

@@ -1,4 +1,4 @@
-package http_web
+package admin
 
 import (
 	"FGW_WEB/internal/handler"
@@ -14,11 +14,9 @@ import (
 )
 
 const (
-	tmplPerformersHTML = "performers.html"
-	tmplErrorHTML      = "error.html"
-
-	tmplStartPageHTML    = "index.html" // /fgw
-	prefixTmplPerformers = "web/html/"
+	tmplAdminPerformersHTML = "performers.html"
+	tmplErrorHTML           = "error.html"
+	prefixTmplPerformers    = "web/html/admin/"
 )
 
 type PerformerHandlerHTML struct {
@@ -33,8 +31,8 @@ func NewPerformerHandlerHTML(performerService service.PerformerUseCase, roleServ
 }
 
 func (p *PerformerHandlerHTML) ServeHTTPHTMLRouter(mux *http.ServeMux) {
-	mux.HandleFunc("/fgw/performers", p.authMiddleware.RequireAuth(p.authMiddleware.RequireRole([]int{3}, p.AllPerformersHTML)))
-	mux.HandleFunc("/fgw/performers/upd", p.authMiddleware.RequireAuth(p.authMiddleware.RequireRole([]int{3}, p.UpdPerformerHTML)))
+	mux.HandleFunc("/admin/performers", p.authMiddleware.RequireAuth(p.authMiddleware.RequireRole([]int{3}, p.AllPerformersHTML)))
+	mux.HandleFunc("/admin/performers/upd", p.authMiddleware.RequireAuth(p.authMiddleware.RequireRole([]int{3}, p.UpdPerformerHTML)))
 }
 
 func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.Request) {
@@ -74,7 +72,7 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 		p.markEditingPerformer(performerIdStr, performers)
 	}
 
-	p.renderPage(w, tmplPerformersHTML, data, r)
+	p.renderPage(w, tmplAdminPerformersHTML, data, r)
 }
 
 func (p *PerformerHandlerHTML) UpdPerformerHTML(w http.ResponseWriter, r *http.Request) {
@@ -90,7 +88,7 @@ func (p *PerformerHandlerHTML) UpdPerformerHTML(w http.ResponseWriter, r *http.R
 
 func (p *PerformerHandlerHTML) renderUpdFormPerformer(w http.ResponseWriter, r *http.Request) {
 	performerIdStr := r.URL.Query().Get("performerId")
-	http.Redirect(w, r, "/fgw/performerId?performer="+performerIdStr, http.StatusFound)
+	http.Redirect(w, r, "/admin/performerId?performer="+performerIdStr, http.StatusFound)
 }
 
 func (p *PerformerHandlerHTML) processUpdFormPerformer(w http.ResponseWriter, r *http.Request) {
@@ -147,7 +145,7 @@ func (p *PerformerHandlerHTML) processUpdFormPerformer(w http.ResponseWriter, r 
 		return
 	}
 
-	http.Redirect(w, r, "/fgw/performers", http.StatusSeeOther)
+	http.Redirect(w, r, "/admin/performers", http.StatusSeeOther)
 }
 
 func (p *PerformerHandlerHTML) markEditingPerformer(id string, performers []*model.Performer) {
