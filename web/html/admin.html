@@ -2,12 +2,42 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>FGW</title>
+    <link rel="stylesheet" href="/web/css/admin/admin.css" type="text/css">
+    <title>Панель Администратора</title>
+
 </head>
 <body>
-{{ .PerformerId}} {{ .PerformerRole }}
-<br>
-<a href="/logout" onclick="return confirm('Вы уверены что хотите выйти?')">Выйти</a>
+<!-- Боковое меню -->
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <div class="user-info">
+            ID: {{ .PerformerId }}<br>
+            Role: {{ .PerformerRole }}
+        </div>
+    </div>
+
+    <ul class="menu">
+        <li class="menu-item active">
+            <a href="#" class="menu-link">
+                <span>👥</span>
+                <span>Сотрудники</span>
+            </a>
+        </li>
+        <li class="menu-item">
+            <a href="/logout"
+               class="menu-link logout"
+               onclick="return confirm('Вы уверены что хотите выйти?')">
+                <span>🚪</span>
+                <span>Выйти</span>
+            </a>
+        </li>
+    </ul>
+</nav>
+
+<!-- Основное содержимое -->
+<main class="main-content">
+    <h1>Добро пожаловать</h1>
+</main>
 </body>
 <script src="../js/admin.js"></script>
 </html>

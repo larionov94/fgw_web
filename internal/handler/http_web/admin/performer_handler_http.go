@@ -17,6 +17,7 @@ const (
 	tmplAdminPerformersHTML = "performers.html"
 	tmplErrorHTML           = "error.html"
 	prefixTmplPerformers    = "web/html/admin/"
+	urlAdminPerformers      = "/admin/performers"
 )
 
 type PerformerHandlerHTML struct {
@@ -145,7 +146,7 @@ func (p *PerformerHandlerHTML) processUpdFormPerformer(w http.ResponseWriter, r 
 		return
 	}
 
-	http.Redirect(w, r, "/admin/performers", http.StatusSeeOther)
+	http.Redirect(w, r, urlAdminPerformers, http.StatusSeeOther)
 }
 
 func (p *PerformerHandlerHTML) markEditingPerformer(id string, performers []*model.Performer) {
