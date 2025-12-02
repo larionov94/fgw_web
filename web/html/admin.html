@@ -3,60 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>FGW</title>
-    <script>
-        // Защита от навигации по истории для защищенных страниц
-        (function() {
-            // Сохраняем токен страницы
-            var pageToken = Date.now();
-
-            // Заменяем состояние в истории
-            if (window.history.replaceState) {
-                history.replaceState({
-                    authed: true,
-                    token: pageToken,
-                    timestamp: new Date().toISOString()
-                }, '', window.location.pathname);
-            }
-
-            // Обработчик навигации
-            window.addEventListener('popstate', function(event) {
-                if (!event.state || event.state.authed !== true) {
-                    // Пытаемся уйти с защищенной страницы
-                    // Можно либо заблокировать, либо сделать logout
-
-                    // Вариант 1: Блокировка
-                    // history.pushState({ authed: true, token: pageToken }, '', window.location.pathname);
-
-                    // Вариант 2: Автоматический logout
-                    window.location.href = '/logout';
-                }
-            });
-
-            // Защита от кэширования
-            window.addEventListener('pageshow', function(event) {
-                if (event.persisted) {
-                    window.location.reload();
-                }
-            });
-
-            // Периодическая проверка активности
-            setInterval(function() {
-                // Можно добавить проверку сессии через AJAX
-                fetch('/api/session-check', {
-                    method: 'HEAD',
-                    credentials: 'include'
-                }).catch(function() {
-                    // Если сессия истекла
-                    window.location.href = '/logout';
-                });
-            }, 300000); // Каждые 5 минут
-
-        })();
-    </script>
 </head>
 <body>
-{{ .PerformerId}}  {{ .PerformerRole }}
+{{ .PerformerId}} {{ .PerformerRole }}
 <br>
 <a href="/logout" onclick="return confirm('Вы уверены что хотите выйти?')">Выйти</a>
 </body>
+<script src="../js/admin.js"></script>
 </html>

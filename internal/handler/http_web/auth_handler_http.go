@@ -18,10 +18,13 @@ import (
 
 const (
 	tmplAdminPerformerHTML = "admin.html"
-	tmplRedirectHTML       = "redirect.html" // Общий шаблон для всех редиректов
+	tmplRedirectHTML       = "redirect.html"
+
+	urlLogin              = "/login"
+	urlLogoutTempRedirect = "/logout-temp-redirect"
+	pathToDefault         = "/"
 )
 
-// Константы для редиректов
 const (
 	RedirectDelayFast    = 100  // 0.1 секунда
 	RedirectDelayNormal  = 300  // 0.3 секунды
@@ -58,7 +61,8 @@ func NewAuthHandlerHTML(
 		performerService: performerService,
 		roleService:      roleService,
 		logg:             logg,
-		authMiddleware:   authMiddleware}
+		authMiddleware:   authMiddleware,
+	}
 }
 
 func (a *AuthHandlerHTML) ServerHTTPRouter(mux *http.ServeMux) {
@@ -76,6 +80,7 @@ func (a *AuthHandlerHTML) StartPageAdmin(w http.ResponseWriter, r *http.Request)
 
 	if !ok1 || !ok2 {
 		a.redirectToLoginWithHistoryClear(w, r)
+
 		return
 	}
 
@@ -167,12 +172,14 @@ func (a *AuthHandlerHTML) Logout(w http.ResponseWriter, r *http.Request) {
 	session.Options.Secure = true
 	session.Options.SameSite = http.SameSiteStrictMode
 
-	session.Save(r, w)
+	if err = session.Save(r, w); err != nil {
+		return
+	}
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     config.GetSessionName(),
 		Value:    "",
-		Path:     "/",
+		Path:     pathToDefault,
 		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   true,
@@ -264,9 +271,6 @@ func (a *AuthHandlerHTML) renderRedirectPage(w http.ResponseWriter, r *http.Requ
 	if data.CurrentURL == "" {
 		data.CurrentURL = r.URL.Path
 	}
-	if data.TempURL == "" && data.AddTempState {
-		//data.TempURL = "/temp-redirect-" + convert.IntToStr(int(time.Now().UnixNano()%1000000))
-	}
 	if data.Delay == 0 {
 		data.Delay = RedirectDelayNormal
 	}
@@ -295,7 +299,7 @@ func (a *AuthHandlerHTML) sendLoginSuccessPage(w http.ResponseWriter, r *http.Re
 		Delay:           RedirectDelayNormal,
 		FallbackDelay:   2000,
 		ClearHistory:    true,
-		AddTempState:    true, // Для входа нужна полная очистка истории
+		AddTempState:    true,
 	}
 
 	a.renderRedirectPage(w, r, data)
@@ -307,13 +311,13 @@ func (a *AuthHandlerHTML) sendLogoutPageWithHistoryClear(w http.ResponseWriter, 
 		Title:           "Выход из системы",
 		Message:         "Вы успешно вышли из системы. Выполняется безопасное перенаправление на страницу входа...",
 		NoScriptMessage: "Включите JavaScript для безопасного выхода.",
-		TargetURL:       "/login",
+		TargetURL:       urlLogin,
 		CurrentURL:      r.URL.Path,
-		TempURL:         "/logout-temp-redirect",
+		TempURL:         urlLogoutTempRedirect,
 		Delay:           RedirectDelayNormal,
 		FallbackDelay:   FallbackDelayDefault,
 		ClearHistory:    true,
-		AddTempState:    true, // Для выхода нужна полная очистка истории
+		AddTempState:    true,
 	}
 
 	a.renderRedirectPage(w, r, data)
@@ -322,8 +326,6 @@ func (a *AuthHandlerHTML) sendLogoutPageWithHistoryClear(w http.ResponseWriter, 
 func (a *AuthHandlerHTML) redirectToLoginWithHistoryClear(w http.ResponseWriter, r *http.Request) {
 	a.sendLogoutPageWithHistoryClear(w, r)
 }
-
-// Вспомогательные методы
 
 func (a *AuthHandlerHTML) setSecureHTMLHeaders(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -347,7 +349,7 @@ func (a *AuthHandlerHTML) createSecureSession(w http.ResponseWriter, r *http.Req
 	session.Values["last_activity"] = time.Now().Unix()
 
 	session.Options = &sessions.Options{
-		Path:     "/",
+		Path:     pathToDefault,
 		MaxAge:   1800,
 		HttpOnly: true,
 		Secure:   true,
@@ -390,14 +392,14 @@ func (a *AuthHandlerHTML) renderPage(w http.ResponseWriter, tmpl string, data in
 		}).ParseFiles(templatePath)
 
 	if err != nil {
-		http.Error(w, "Template error: "+err.Error(), http.StatusInternalServerError)
-		a.logg.LogE("Ошибка загрузки шаблона:", err)
+		a.renderErrorPage(w, http.StatusInternalServerError, msg.H7002+err.Error(), r)
+
 		return
 	}
 
 	if err = parseTmpl.ExecuteTemplate(w, tmpl, data); err != nil {
-		http.Error(w, "Template execution error: "+err.Error(), http.StatusInternalServerError)
-		a.logg.LogE("Ошибка выполнения шаблона:", err)
+		a.renderErrorPage(w, http.StatusInternalServerError, msg.H7003+err.Error(), r)
+
 		return
 	}
 }

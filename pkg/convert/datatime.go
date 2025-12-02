@@ -18,3 +18,11 @@ func FormatDateTime(dateTime string) string {
 
 	return t.Format("02.01.2006 15:04:05")
 }
+
+func FormatTimestamp(timestamp int64) string {
+	if timestamp == 0 {
+		return "не указано"
+	}
+	t := time.Unix(timestamp, 0)
+	return t.Format("02.01.2006 15:04:05")
+}
