@@ -45,27 +45,27 @@ func (m *AuthMiddleware) RequireAuth(next http.HandlerFunc) http.HandlerFunc {
 		// Получаем сессию с помощью безопасного метода.
 		session, err := m.getSecureSession(r)
 		if err != nil {
-			m.forceLogoutAndRedirect(w, r, "Ошибка получения сессии")
+			m.forceLogoutAndRedirect(w, r, "     Ошибка получения сессии")
 
 			return
 		}
 
 		if session == nil {
-			m.forceLogoutAndRedirect(w, r, "Сессия не найдена")
+			m.forceLogoutAndRedirect(w, r, "     Сессия не найдена")
 
 			return
 		}
 
 		// Проверяем аутентификацию.
 		if auth, ok := session.Values[config.SessionAuthPerformer].(bool); !ok || !auth {
-			m.forceLogoutAndRedirect(w, r, "Требуется аутентификация")
+			m.forceLogoutAndRedirect(w, r, "     Требуется аутентификация")
 
 			return
 		}
 
 		// Проверяем время жизни сессии.
 		if m.isSessionExpired(session) {
-			m.forceLogoutAndRedirect(w, r, "Сессия истекла")
+			m.forceLogoutAndRedirect(w, r, "     Сессия истекла")
 
 			return
 		}
@@ -98,12 +98,12 @@ func (m *AuthMiddleware) RequireRole(requireRoles []int, next http.HandlerFunc) 
 
 		performerRole, ok := session.Values[m.roleKey].(int)
 		if !ok {
-			m.forceLogoutAndRedirect(w, r, "Роль не определена")
+			m.forceLogoutAndRedirect(w, r, "     Роль не определена")
 			return
 		}
 
 		if !allowedRoles[performerRole] {
-			http_err.SendErrorHTTP(w, http.StatusForbidden, "Доступ запрещен: недостаточно прав.", m.logg, r)
+			http_err.SendErrorHTTP(w, http.StatusForbidden, "     Доступ запрещен: недостаточно прав.", m.logg, r)
 			return
 		}
 
@@ -225,7 +225,7 @@ func (m *AuthMiddleware) forceLogoutAndRedirect(w http.ResponseWriter, r *http.R
 	// Загружаем HTML шаблон
 	tmpl, err := template.ParseFiles(prefixTmplPerformers + tmplForceLogoutHTML)
 	if err != nil {
-		http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
+		http.Error(w, "     Ошибка загрузки шаблона", http.StatusInternalServerError)
 		return
 	}
 
