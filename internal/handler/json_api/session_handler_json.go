@@ -23,22 +23,22 @@ func (a *AuthHandlerJSON) ServeHTTPJSONRouter(mux *http.ServeMux) {
 }
 
 func (a *AuthHandlerJSON) SessionCheckHandler(w http.ResponseWriter, r *http.Request) {
-	// Разрешаем только HEAD и GET
+	// Разрешаем только HEAD и GET.
 	if r.Method != http.MethodHead && r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Получаем сессию
+	// Получаем сессию.
 	session, err := config.Store.Get(r, config.GetSessionName())
 	if err != nil {
-		// Нет сессии или ошибка
+		// Нет сессии или ошибка.
 		w.Header().Set("Session-Status", "no-session")
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
-	// Проверяем аутентификацию
+	// Проверяем аутентификацию.
 	if auth, ok := session.Values[config.SessionAuthPerformer].(bool); !ok || !auth {
 		w.Header().Set("Session-Status", "not-authenticated")
 		w.WriteHeader(http.StatusUnauthorized)
@@ -49,7 +49,7 @@ func (a *AuthHandlerJSON) SessionCheckHandler(w http.ResponseWriter, r *http.Req
 	if createdAt, ok := session.Values["created_at"].(int64); ok {
 		createTime := time.Unix(createdAt, 0)
 
-		// 4 часа максимальное время (как в middleware)
+		// 4 часа максимальное время (как в middleware).
 		maxAge := 4 * time.Hour
 
 		if time.Since(createTime) > maxAge {
@@ -64,15 +64,17 @@ func (a *AuthHandlerJSON) SessionCheckHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// Обновляем время последней активности
+	// Обновляем время последней активности.
 	session.Values["last_activity"] = time.Now().Unix()
-	session.Save(r, w)
+	if err = session.Save(r, w); err != nil {
+		return
+	}
 
-	// Сессия валидна
+	// Сессия валидна.
 	w.Header().Set("Session-Status", "active")
 	w.WriteHeader(http.StatusOK)
 
-	// Для GET запросов можно вернуть JSON
+	// Для GET запросов можно вернуть JSON.
 	if r.Method == http.MethodGet {
 		performerId, _ := session.Values[config.SessionPerformerKey].(int)
 		roleId, _ := session.Values[config.SessionRoleKey].(int)
@@ -87,6 +89,8 @@ func (a *AuthHandlerJSON) SessionCheckHandler(w http.ResponseWriter, r *http.Req
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		if err = json.NewEncoder(w).Encode(response); err != nil {
+			return
+		}
 	}
 }

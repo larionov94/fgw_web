@@ -39,3 +39,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// Блокировка кэширования и управление историей
+window.addEventListener('pageshow', function(event) {
+    // Если страница загружена из кэша - перезагружаем
+    if (event.persisted) {
+        window.location.reload();
+    }
+});
+
+// Очищаем историю при загрузке
+if (window.history.replaceState) {
+    history.replaceState(null, '', '/login');
+    // Блокируем кнопку "назад" на странице логина
+    history.pushState(null, '', window.location.href);
+}
+
+// Предотвращаем навигацию назад/вперед
+window.addEventListener('popstate', function() {
+    if (window.location.pathname === '/login') {
+        history.pushState(null, '', window.location.href);
+    }
+});

@@ -5,29 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/web/css/auth.css" type="text/css">
     <title>Авторизация</title>
-    <script>
-        // Блокировка кэширования и управление историей
-        window.addEventListener('pageshow', function(event) {
-            // Если страница загружена из кэша - перезагружаем
-            if (event.persisted) {
-                window.location.reload();
-            }
-        });
-
-        // Очищаем историю при загрузке
-        if (window.history.replaceState) {
-            history.replaceState(null, '', '/login');
-            // Блокируем кнопку "назад" на странице логина
-            history.pushState(null, '', window.location.href);
-        }
-
-        // Предотвращаем навигацию назад/вперед
-        window.addEventListener('popstate', function() {
-            if (window.location.pathname === '/login') {
-                history.pushState(null, '', window.location.href);
-            }
-        });
-    </script>
 </head>
 <body>
 <div class="login-container">

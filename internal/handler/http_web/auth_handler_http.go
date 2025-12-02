@@ -19,7 +19,9 @@ import (
 const (
 	tmplAdminPerformerHTML = "admin.html"
 	tmplRedirectHTML       = "redirect.html"
+	tmplAuthHTML           = "auth.html"
 
+	urlAuth               = "/auth"
 	urlLogin              = "/login"
 	urlLogoutTempRedirect = "/logout-temp-redirect"
 	pathToDefault         = "/"
@@ -256,7 +258,6 @@ func (a *AuthHandlerHTML) safeRedirectBasedOnRole(w http.ResponseWriter, r *http
 	a.renderRedirectPage(w, r, data)
 }
 
-// УНИФИЦИРОВАННЫЙ МЕТОД ДЛЯ ВСЕХ РЕДИРЕКТОВ
 func (a *AuthHandlerHTML) renderRedirectPage(w http.ResponseWriter, r *http.Request, data RedirectData) {
 	// Устанавливаем значения по умолчанию
 	if data.Title == "" {
@@ -294,8 +295,8 @@ func (a *AuthHandlerHTML) sendLoginSuccessPage(w http.ResponseWriter, r *http.Re
 		Message:         "Вход выполнен успешно. Выполняется безопасное перенаправление...",
 		NoScriptMessage: "Включите JavaScript для безопасного перехода.",
 		TargetURL:       target,
-		CurrentURL:      "/auth",
-		TempURL:         "/login-temp-redirect",
+		CurrentURL:      urlAuth,
+		TempURL:         urlLogoutTempRedirect,
 		Delay:           RedirectDelayNormal,
 		FallbackDelay:   2000,
 		ClearHistory:    true,

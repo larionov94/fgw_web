@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	tmplPerformersHTML   = "performers.html"
-	tmplErrorHTML        = "error.html"
-	tmplAuthHTML         = "auth.html"
+	tmplPerformersHTML = "performers.html"
+	tmplErrorHTML      = "error.html"
+
 	tmplStartPageHTML    = "index.html" // /fgw
 	prefixTmplPerformers = "web/html/"
 )
