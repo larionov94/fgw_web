@@ -6,11 +6,9 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 
-	"github.com/gorilla/sessions"
 	"github.com/joho/godotenv"
 )
 
@@ -58,17 +56,9 @@ func loadEnvFile(pathFile string) error {
 
 func GenerateSessionToken() string {
 	b := make([]byte, 32)
-	rand.Read(b)
-	return base64.URLEncoding.EncodeToString(b)
-}
-
-// UpdateSessionStoreOptions - обновление настроек хранилища (добавить в config)
-func UpdateSessionStoreOptions(maxAge int) {
-	Store.Options = &sessions.Options{
-		Path:     "/",
-		MaxAge:   maxAge,
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
+	if _, err := rand.Read(b); err != nil {
+		return ""
 	}
+
+	return base64.URLEncoding.EncodeToString(b)
 }
