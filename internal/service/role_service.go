@@ -22,6 +22,7 @@ type RoleUseCase interface {
 	UpdRole(ctx context.Context, id int, role *model.Role) error
 	AddRole(ctx context.Context, role *model.Role) error
 	ExistRole(ctx context.Context, id int) (bool, error)
+	FindRoleById(ctx context.Context, id int) (*model.Role, error)
 }
 
 func (r *RoleService) GetAllRole(ctx context.Context) ([]*model.Role, error) {
@@ -65,6 +66,17 @@ func (r *RoleService) AddRole(ctx context.Context, role *model.Role) error {
 	}
 
 	return nil
+}
+
+func (r *RoleService) FindRoleById(ctx context.Context, id int) (*model.Role, error) {
+	role, err := r.roleRepo.FindById(ctx, id)
+	if err != nil {
+		r.logg.LogE(msg.E3212, err)
+
+		return nil, err
+	}
+
+	return role, nil
 }
 
 func (r *RoleService) ExistRole(ctx context.Context, id int) (bool, error) {

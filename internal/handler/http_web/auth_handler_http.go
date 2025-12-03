@@ -9,6 +9,7 @@ import (
 	"FGW_WEB/pkg/common/msg"
 	"FGW_WEB/pkg/convert"
 	"html/template"
+	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -93,15 +94,28 @@ func (a *AuthHandlerHTML) StartPageAdmin(w http.ResponseWriter, r *http.Request)
 
 	a.setSecureHTMLHeaders(w)
 
+	performer, err := a.performerService.FindByIdPerformer(r.Context(), performerId)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	role, err := a.roleService.FindRoleById(r.Context(), performerRole)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
 	data := struct {
+		PerformerFIO  string
 		PerformerId   int
-		PerformerRole int
+		PerformerRole string
 	}{
+		PerformerFIO:  performer.FIO,
 		PerformerId:   performerId,
-		PerformerRole: performerRole,
+		PerformerRole: role.Name,
 	}
 
 	a.renderPage(w, tmplAdminPerformerHTML, data, r)
+	//a.renderPages(w, []string{prefixTmplPerformers + tmplAdminPerformerHTML, prefixTmplPerformers + "admin/performers.html"}, data, r)
 }
 
 func (a *AuthHandlerHTML) StartPage(w http.ResponseWriter, r *http.Request) {

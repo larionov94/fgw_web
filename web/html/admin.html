@@ -11,14 +11,21 @@
 <nav class="sidebar">
     <div class="sidebar-header">
         <div class="user-info">
-            ID: {{ .PerformerId }}<br>
-            Role: {{ .PerformerRole }}
+            Табельный номер: {{ .PerformerId }}<br>
+            Роль: {{ .PerformerRole }}<br>
+            Сотрудник: {{ .PerformerFIO}}
         </div>
     </div>
 
     <ul class="menu">
         <li class="menu-item active">
-            <a href="#" class="menu-link">
+            <a href="/admin" class="menu-link">
+                <span>🏠</span>
+                <span>Главная</span>
+            </a>
+        </li>
+        <li class="menu-item">
+            <a href="/admin/performers" class="menu-link">
                 <span>👥</span>
                 <span>Сотрудники</span>
             </a>
