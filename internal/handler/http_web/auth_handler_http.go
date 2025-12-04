@@ -278,7 +278,7 @@ func (a *AuthHandlerHTML) safeRedirectBasedOnRole(w http.ResponseWriter, r *http
 		Delay:           RedirectDelayFast,
 		FallbackDelay:   FallbackDelayDefault,
 		ClearHistory:    true,
-		AddTempState:    false, // Для этого случая не нужно сложное управление историей
+		AddTempState:    false,
 	}
 
 	a.renderRedirectPage(w, r, data)

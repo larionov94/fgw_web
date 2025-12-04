@@ -206,7 +206,7 @@ func (p *PerformerHandlerHTML) renderPage(w http.ResponseWriter, tmpl string, da
 	parseTmpl, err := template.New(tmpl).Funcs(
 		template.FuncMap{
 			"formatDateTime": convert.FormatDateTime,
-		}).ParseFiles(prefixTmplAdmin + tmpl)
+		}).ParseFiles(prefixDefaultTmpl + tmpl)
 	if err != nil {
 		p.renderErrorPage(w, http.StatusInternalServerError, msg.H7002+err.Error(), r)
 
