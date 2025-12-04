@@ -18,20 +18,24 @@ import (
 )
 
 const (
-	tmplAdminPerformerHTML = "admin.html"
-	tmplRedirectHTML       = "redirect.html"
-	tmplAuthHTML           = "auth.html"
+	tmplAdminHTML      = "admin.html"
+	tmplRedirectHTML   = "redirect.html"
+	tmplAuthHTML       = "auth.html"
+	tmplPerformersHTML = "performers.html"
 
+	urlAdmin              = "/admin"
+	urlFGW                = "/fgw"
 	urlAuth               = "/auth"
 	urlLogin              = "/login"
 	urlLogoutTempRedirect = "/logout-temp-redirect"
+	urlTempRedirect       = "/temp-redirect"
 	pathToDefault         = "/"
 	tmplStartPageHTML     = "index.html"
 	tmplErrorHTML         = "error.html"
 
 	// /fgw
-	prefixTmplPerformers = "web/html/"
-	prefixTmplAdmin      = "web/html/admin/"
+	prefixDefaultTmpl = "web/html/"
+	prefixAdminTmpl   = "web/html/admin/"
 )
 
 const (
@@ -118,7 +122,7 @@ func (a *AuthHandlerHTML) StartPageAdmin(w http.ResponseWriter, r *http.Request)
 		PerformerRole: role.Name,
 	}
 
-	a.renderPages(w, tmplAdminPerformerHTML, data, r, "performers.html")
+	a.renderPages(w, tmplAdminHTML, data, r, tmplPerformersHTML)
 }
 
 func (a *AuthHandlerHTML) StartPage(w http.ResponseWriter, r *http.Request) {
@@ -259,9 +263,9 @@ func (a *AuthHandlerHTML) AuthPerformerHTML(w http.ResponseWriter, r *http.Reque
 
 // НОВЫЙ МЕТОД: safeRedirectBasedOnRole с использованием общего шаблона
 func (a *AuthHandlerHTML) safeRedirectBasedOnRole(w http.ResponseWriter, r *http.Request, session *sessions.Session) {
-	target := "/fgw"
+	target := urlFGW
 	if role, ok := session.Values[config.SessionRoleKey].(int); ok && role == 3 {
-		target = "/admin"
+		target = urlAdmin
 	}
 
 	data := RedirectData{
@@ -270,7 +274,7 @@ func (a *AuthHandlerHTML) safeRedirectBasedOnRole(w http.ResponseWriter, r *http
 		NoScriptMessage: "Включите JavaScript для безопасного перехода.",
 		TargetURL:       target,
 		CurrentURL:      r.URL.Path,
-		TempURL:         "/temp-redirect",
+		TempURL:         urlTempRedirect,
 		Delay:           RedirectDelayFast,
 		FallbackDelay:   FallbackDelayDefault,
 		ClearHistory:    true,
@@ -281,7 +285,6 @@ func (a *AuthHandlerHTML) safeRedirectBasedOnRole(w http.ResponseWriter, r *http
 }
 
 func (a *AuthHandlerHTML) renderRedirectPage(w http.ResponseWriter, r *http.Request, data RedirectData) {
-	// Устанавливаем значения по умолчанию
 	if data.Title == "" {
 		data.Title = "Перенаправление"
 	}
@@ -307,9 +310,9 @@ func (a *AuthHandlerHTML) renderRedirectPage(w http.ResponseWriter, r *http.Requ
 
 // Обновленный sendLoginSuccessPage
 func (a *AuthHandlerHTML) sendLoginSuccessPage(w http.ResponseWriter, r *http.Request, roleId int) {
-	target := "/fgw"
+	target := urlFGW
 	if roleId == 3 {
-		target = "/admin"
+		target = urlAdmin
 	}
 
 	data := RedirectData{
@@ -407,7 +410,7 @@ func (a *AuthHandlerHTML) renderErrorPage(w http.ResponseWriter, statusCode int,
 }
 
 func (a *AuthHandlerHTML) renderPage(w http.ResponseWriter, tmpl string, data interface{}, r *http.Request) {
-	templatePath := prefixTmplPerformers + tmpl
+	templatePath := prefixDefaultTmpl + tmpl
 
 	parseTmpl, err := template.New(tmpl).Funcs(
 		template.FuncMap{
@@ -428,12 +431,11 @@ func (a *AuthHandlerHTML) renderPage(w http.ResponseWriter, tmpl string, data in
 }
 
 func (a *AuthHandlerHTML) renderPages(
-	w http.ResponseWriter, tmpl string, data interface{}, r *http.Request, addTemplates ...string) {
+	w http.ResponseWriter, tmpl string, data interface{}, r *http.Request, additionalTemplates ...string) {
+	templatePaths := []string{prefixDefaultTmpl + tmpl}
 
-	templatePaths := []string{"web/html/" + tmpl}
-
-	for _, addTmpl := range addTemplates {
-		templatePaths = append(templatePaths, "web/html/admin/"+addTmpl)
+	for _, additionalTmpl := range additionalTemplates {
+		templatePaths = append(templatePaths, prefixAdminTmpl+additionalTmpl)
 	}
 
 	parseTmpl, err := template.New(tmpl).Funcs(

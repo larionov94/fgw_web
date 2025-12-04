@@ -19,7 +19,12 @@ const (
 	tmplErrorHTML           = "error.html"
 	prefixTmplAdmin         = "web/html/admin/"
 	urlAdminPerformers      = "/admin/performers"
+
+	prefixDefaultTmpl = "web/html/"
+	prefixAdminTmpl   = "web/html/admin/"
 )
+
+var authPerformerId int
 
 type PerformerHandlerHTML struct {
 	performerService service.PerformerUseCase
@@ -57,8 +62,9 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 		return
 	}
 
-	// Получаем данные текущего пользователя
 	performerId, _ := p.authMiddleware.GetPerformerId(r)
+	authPerformerId = performerId
+
 	performerRole, _ := p.authMiddleware.GetRoleId(r)
 
 	performer, err := p.performerService.FindByIdPerformer(r.Context(), performerId)
@@ -94,7 +100,6 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 	}
 
 	p.renderPages(w, "admin.html", data, r, tmplAdminPerformersHTML)
-	//p.renderPage(w, tmplAdminPerformersHTML, data, r)
 }
 
 func (p *PerformerHandlerHTML) UpdPerformerHTML(w http.ResponseWriter, r *http.Request) {
@@ -125,16 +130,14 @@ func (p *PerformerHandlerHTML) processUpdFormPerformer(w http.ResponseWriter, r 
 	performerIdStr := r.FormValue("performerId")
 	idRoleAFormsStr := r.FormValue("idRoleAForms")
 	idRoleAFGWStr := r.FormValue("idRoleAFGW")
-	updatedByStr := r.FormValue("updatedBy")
 
-	if idRoleAFormsStr == "" || idRoleAFGWStr == "" || updatedByStr == "" {
+	if idRoleAFormsStr == "" || idRoleAFGWStr == "" {
 		p.renderErrorPage(w, http.StatusUnauthorized, msg.E3214, r)
 
 		return
 	}
 
 	performerId := convert.ConvStrToInt(performerIdStr)
-	updatedBy := convert.ConvStrToInt(updatedByStr)
 	idRoleAForms := convert.ConvStrToInt(idRoleAFormsStr)
 	idRoleAFGW := convert.ConvStrToInt(idRoleAFGWStr)
 
@@ -157,11 +160,11 @@ func (p *PerformerHandlerHTML) processUpdFormPerformer(w http.ResponseWriter, r 
 		IdRoleAFGW:   idRoleAFGW,
 		AuditRec: model.Audit{
 			UpdatedAt: time.Now().String(),
-			UpdatedBy: updatedBy, // TODO: заменить на авторизованного сотрудника
+			UpdatedBy: authPerformerId,
 		},
 	}
 
-	if err := p.performerService.UpdPerformer(r.Context(), performerId, &performer); err != nil {
+	if err = p.performerService.UpdPerformer(r.Context(), performerId, &performer); err != nil {
 		http_err.SendErrorHTTP(w, http.StatusInternalServerError, err.Error(), p.logg, r)
 
 		return
@@ -220,10 +223,10 @@ func (p *PerformerHandlerHTML) renderPage(w http.ResponseWriter, tmpl string, da
 func (p *PerformerHandlerHTML) renderPages(
 	w http.ResponseWriter, tmpl string, data interface{}, r *http.Request, addTemplates ...string) {
 
-	templatePaths := []string{"web/html/" + tmpl}
+	templatePaths := []string{prefixDefaultTmpl + tmpl}
 
 	for _, addTmpl := range addTemplates {
-		templatePaths = append(templatePaths, "web/html/admin/"+addTmpl)
+		templatePaths = append(templatePaths, prefixAdminTmpl+addTmpl)
 	}
 
 	parseTmpl, err := template.New(tmpl).Funcs(

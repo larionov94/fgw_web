@@ -59,11 +59,7 @@
                 <td>{{formatDateTime .AuditRec.CreatedAt}}</td>
                 <td>{{ .AuditRec.CreatedBy}}</td>
                 <td>{{formatDateTime .AuditRec.UpdatedAt}}</td>
-                <td>
-                    <label>
-                        <input type="number" name="updatedBy" value="{{ .AuditRec.UpdatedBy}}">
-                    </label>
-                </td>
+                <td>{{ .AuditRec.UpdatedBy}}</td>
                 <td>
                     <input type="hidden" name="performerId" value="{{ .Id}}">
                     <input type="submit" value="Сохранить">
