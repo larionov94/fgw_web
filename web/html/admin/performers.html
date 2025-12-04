@@ -1,12 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/web/css/style.css" type="text/css">
-    <title>{{.Title}}</title>
-</head>
-<body>
+{{define "performers_content"}}
 <div class="container">
     <h1>{{.Title}}</h1>
 
@@ -30,7 +22,6 @@
         </thead>
         <tbody>
         {{range .Performers}}
-
         <tr id="performer_{{ .Id }}" {{if .Archive}}class="archive" {{end}}>
             <td>{{ .Id }}</td>
             {{if .IsEditing}}
@@ -85,21 +76,19 @@
             <td>
                 {{ $performer := . }}
                 {{ range $.Roles }}
-                    {{ if eq .Id $performer.IdRoleAForms }}
-                        {{ .Name }}
-                    {{ end }}
+                {{ if eq .Id $performer.IdRoleAForms }}
+                {{ .Name }}
+                {{ end }}
                 {{ end }}
             </td>
             <td>
                 {{ $performer := . }}
                 {{ range $.Roles }}
-                    {{ if eq .Id $performer.IdRoleAFGW }}
-                        {{ .Name }}
-                    {{ end }}
+                {{ if eq .Id $performer.IdRoleAFGW }}
+                {{ .Name }}
+                {{ end }}
                 {{ end }}
             </td>
-<!--            <td>{{.IdRoleAForms}}</td>-->
-<!--            <td>{{.IdRoleAFGW}}</td>-->
             <td class="{{if .Archive}}status-archive{{else}}status-active{{end}}">
                 {{if .Archive}}Архивный{{else}}Активный{{end}}
             </td>
@@ -110,7 +99,6 @@
             <td>
                 <a href="/admin/performers?performerId={{ .Id }}#performer_{{ .Id }}">Изменить</a>
             </td>
-
             {{end}}
         </tr>
         {{ end }}
@@ -126,5 +114,4 @@
     </p>
     {{end}}
 </div>
-</body>
-</html>
+{{end}}

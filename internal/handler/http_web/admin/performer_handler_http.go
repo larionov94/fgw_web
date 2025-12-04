@@ -9,6 +9,7 @@ import (
 	"FGW_WEB/pkg/common/msg"
 	"FGW_WEB/pkg/convert"
 	"html/template"
+	"log"
 	"net/http"
 	"time"
 )
@@ -16,7 +17,7 @@ import (
 const (
 	tmplAdminPerformersHTML = "performers.html"
 	tmplErrorHTML           = "error.html"
-	prefixTmplPerformers    = "web/html/admin/"
+	prefixTmplAdmin         = "web/html/admin/"
 	urlAdminPerformers      = "/admin/performers"
 )
 
@@ -41,39 +42,59 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 
 	if r.Method != http.MethodGet {
 		http_err.SendErrorHTTP(w, http.StatusMethodNotAllowed, "", p.logg, r)
-
 		return
 	}
 
 	performers, err := p.performerService.GetAllPerformers(r.Context())
 	if err != nil {
 		http_err.SendErrorHTTP(w, http.StatusInternalServerError, err.Error(), p.logg, r)
-
 		return
 	}
 
 	roles, err := p.roleService.GetAllRole(r.Context())
 	if err != nil {
 		http_err.SendErrorHTTP(w, http.StatusInternalServerError, err.Error(), p.logg, r)
-
 		return
 	}
 
-	data := struct {
-		Title      string
-		Performers []*model.Performer
-		Roles      []*model.Role
-	}{
-		Title:      "Список сотрудников",
-		Performers: performers,
-		Roles:      roles,
+	// Получаем данные текущего пользователя
+	performerId, _ := p.authMiddleware.GetPerformerId(r)
+	performerRole, _ := p.authMiddleware.GetRoleId(r)
+
+	performer, err := p.performerService.FindByIdPerformer(r.Context(), performerId)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	role, err := p.roleService.FindRoleById(r.Context(), performerRole)
+	if err != nil {
+		log.Println(err.Error())
 	}
 
 	if performerIdStr := r.URL.Query().Get("performerId"); performerIdStr != "" {
 		p.markEditingPerformer(performerIdStr, performers)
 	}
 
-	p.renderPage(w, tmplAdminPerformersHTML, data, r)
+	data := struct {
+		Title         string
+		CurrentPage   string
+		Performers    []*model.Performer
+		Roles         []*model.Role
+		PerformerFIO  string
+		PerformerId   int
+		PerformerRole string
+	}{
+		Title:         "Список сотрудников",
+		CurrentPage:   "performers",
+		Performers:    performers,
+		Roles:         roles,
+		PerformerFIO:  performer.FIO,
+		PerformerId:   performerId,
+		PerformerRole: role.Name,
+	}
+
+	p.renderPages(w, "admin.html", data, r, tmplAdminPerformersHTML)
+	//p.renderPage(w, tmplAdminPerformersHTML, data, r)
 }
 
 func (p *PerformerHandlerHTML) UpdPerformerHTML(w http.ResponseWriter, r *http.Request) {
@@ -182,7 +203,34 @@ func (p *PerformerHandlerHTML) renderPage(w http.ResponseWriter, tmpl string, da
 	parseTmpl, err := template.New(tmpl).Funcs(
 		template.FuncMap{
 			"formatDateTime": convert.FormatDateTime,
-		}).ParseFiles(prefixTmplPerformers + tmpl)
+		}).ParseFiles(prefixTmplAdmin + tmpl)
+	if err != nil {
+		p.renderErrorPage(w, http.StatusInternalServerError, msg.H7002+err.Error(), r)
+
+		return
+	}
+
+	if err = parseTmpl.ExecuteTemplate(w, tmpl, data); err != nil {
+		p.renderErrorPage(w, http.StatusInternalServerError, msg.H7003+err.Error(), r)
+
+		return
+	}
+}
+
+func (p *PerformerHandlerHTML) renderPages(
+	w http.ResponseWriter, tmpl string, data interface{}, r *http.Request, addTemplates ...string) {
+
+	templatePaths := []string{"web/html/" + tmpl}
+
+	for _, addTmpl := range addTemplates {
+		templatePaths = append(templatePaths, "web/html/admin/"+addTmpl)
+	}
+
+	parseTmpl, err := template.New(tmpl).Funcs(
+		template.FuncMap{
+			"formatDateTime": convert.FormatDateTime,
+		}).ParseFiles(templatePaths...)
+
 	if err != nil {
 		p.renderErrorPage(w, http.StatusInternalServerError, msg.H7002+err.Error(), r)
 

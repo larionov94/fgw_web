@@ -31,6 +31,7 @@ const (
 
 	// /fgw
 	prefixTmplPerformers = "web/html/"
+	prefixTmplAdmin      = "web/html/admin/"
 )
 
 const (
@@ -88,7 +89,6 @@ func (a *AuthHandlerHTML) StartPageAdmin(w http.ResponseWriter, r *http.Request)
 
 	if !ok1 || !ok2 {
 		a.redirectToLoginWithHistoryClear(w, r)
-
 		return
 	}
 
@@ -105,17 +105,20 @@ func (a *AuthHandlerHTML) StartPageAdmin(w http.ResponseWriter, r *http.Request)
 	}
 
 	data := struct {
+		Title         string
+		CurrentPage   string
 		PerformerFIO  string
 		PerformerId   int
 		PerformerRole string
 	}{
+		Title:         "Панель администратора",
+		CurrentPage:   "dashboard",
 		PerformerFIO:  performer.FIO,
 		PerformerId:   performerId,
 		PerformerRole: role.Name,
 	}
 
-	a.renderPage(w, tmplAdminPerformerHTML, data, r)
-	//a.renderPages(w, []string{prefixTmplPerformers + tmplAdminPerformerHTML, prefixTmplPerformers + "admin/performers.html"}, data, r)
+	a.renderPages(w, tmplAdminPerformerHTML, data, r, "performers.html")
 }
 
 func (a *AuthHandlerHTML) StartPage(w http.ResponseWriter, r *http.Request) {
@@ -410,6 +413,33 @@ func (a *AuthHandlerHTML) renderPage(w http.ResponseWriter, tmpl string, data in
 		template.FuncMap{
 			"formatDateTime": convert.FormatDateTime,
 		}).ParseFiles(templatePath)
+
+	if err != nil {
+		a.renderErrorPage(w, http.StatusInternalServerError, msg.H7002+err.Error(), r)
+
+		return
+	}
+
+	if err = parseTmpl.ExecuteTemplate(w, tmpl, data); err != nil {
+		a.renderErrorPage(w, http.StatusInternalServerError, msg.H7003+err.Error(), r)
+
+		return
+	}
+}
+
+func (a *AuthHandlerHTML) renderPages(
+	w http.ResponseWriter, tmpl string, data interface{}, r *http.Request, addTemplates ...string) {
+
+	templatePaths := []string{"web/html/" + tmpl}
+
+	for _, addTmpl := range addTemplates {
+		templatePaths = append(templatePaths, "web/html/admin/"+addTmpl)
+	}
+
+	parseTmpl, err := template.New(tmpl).Funcs(
+		template.FuncMap{
+			"formatDateTime": convert.FormatDateTime,
+		}).ParseFiles(templatePaths...)
 
 	if err != nil {
 		a.renderErrorPage(w, http.StatusInternalServerError, msg.H7002+err.Error(), r)

@@ -21,9 +21,9 @@ func NewRoleHandlerHTML(roleService service.RoleUseCase, logger *common.Logger) 
 }
 
 func (r *RoleHandlerHTML) ServerHTTPHTMLRouter(mux *http.ServeMux) {
-	mux.HandleFunc("/fgw/roles", r.AllRoleHTML)
-	mux.HandleFunc("/fgw/roles/add", r.AddRoleHTML)
-	mux.HandleFunc("/fgw/roles/upd", r.UpdRoleHTML)
+	mux.HandleFunc("/admin/roles", r.AllRoleHTML)
+	mux.HandleFunc("/admin/roles/add", r.AddRoleHTML)
+	mux.HandleFunc("/admin/roles/upd", r.UpdRoleHTML)
 }
 
 func (r *RoleHandlerHTML) AllRoleHTML(w http.ResponseWriter, req *http.Request) {
@@ -95,7 +95,7 @@ func (r *RoleHandlerHTML) AddRoleHTML(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	http.Redirect(w, req, "/fgw/roles", http.StatusSeeOther)
+	http.Redirect(w, req, "/admin/roles", http.StatusSeeOther)
 }
 
 func (r *RoleHandlerHTML) UpdRoleHTML(w http.ResponseWriter, req *http.Request) {
@@ -111,7 +111,7 @@ func (r *RoleHandlerHTML) UpdRoleHTML(w http.ResponseWriter, req *http.Request) 
 
 func (r *RoleHandlerHTML) renderUpdFormRole(w http.ResponseWriter, req *http.Request) {
 	roleIdStr := req.URL.Query().Get("roleId")
-	http.Redirect(w, req, "/fgw/roles?roleId="+roleIdStr, http.StatusSeeOther)
+	http.Redirect(w, req, "/admin/roles?roleId="+roleIdStr, http.StatusSeeOther)
 }
 
 func (r *RoleHandlerHTML) processUpdFormRole(w http.ResponseWriter, req *http.Request) {
@@ -153,7 +153,7 @@ func (r *RoleHandlerHTML) processUpdFormRole(w http.ResponseWriter, req *http.Re
 		return
 	}
 
-	http.Redirect(w, req, "/fgw/roles", http.StatusSeeOther)
+	http.Redirect(w, req, "/admin/roles", http.StatusSeeOther)
 }
 
 func (r *RoleHandlerHTML) markEditingRole(id string, roles []*model.Role) {
@@ -189,7 +189,7 @@ func (r *RoleHandlerHTML) renderPage(w http.ResponseWriter, tmpl string, data in
 	parseTmpl, err := template.New(tmpl).Funcs(
 		template.FuncMap{
 			"formatDateTime": convert.FormatDateTime,
-		}).ParseFiles(prefixTmplPerformers + tmpl)
+		}).ParseFiles(prefixTmplAdmin + tmpl)
 	if err != nil {
 		r.renderErrorPage(w, http.StatusInternalServerError, msg.H7002+err.Error(), req)
 
