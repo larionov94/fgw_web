@@ -138,16 +138,16 @@ h1 {
 /* Статусы */
 .status-active {
     color: #27ae60;
-    font-weight: 500;
+    font-weight: 100;
     padding: 4px 10px;
     background-color: #e8f5e9;
     border-radius: 4px;
-    display: inline-block;
+    display: block;
 }
 
 .status-archive {
     color: #e74c3c;
-    font-weight: 500;
+    font-weight: 100;
     padding: 4px 10px;
     background-color: #ffebee;
     border-radius: 4px;
@@ -305,4 +305,124 @@ p[style*="text-align: center"] {
         padding: 6px 8px;
         font-size: 12px;
     }
+}
+.performers-table {
+    font-size: 12px;
+}
+
+.performers-table th {
+    font-size: 12px;
+    padding: 10px 12px;
+    font-weight: 600;
+}
+
+.performers-table td {
+    font-size: 12px;
+    padding: 8px 10px;
+}
+
+/* Уменьшаем элементы внутри таблицы */
+.performers-table select,
+.performers-table input[type="number"],
+.performers-table input[type="submit"] {
+    font-size: 12px;
+    padding: 6px 10px;
+}
+
+.performers-table a {
+    font-size: 12px;
+    padding: 4px 8px;
+}
+
+/* Уменьшаем бейджи статусов */
+/*.status-active,*/
+/*.status-archive {*/
+/*    font-size: 11px;*/
+/*    padding: 4px 8px;*/
+/*    min-width: 40px;*/
+/*}*/
+/* Просто фиксируем ширину последнего столбца */
+.performers-table td:last-child {
+    width: 130px;
+    text-align: center;
+}
+
+/* Делаем кнопки одинаковой ширины */
+.performers-table td:last-child a,
+.performers-table td:last-child input[type="submit"] {
+    width: 110px;
+    padding: 7px 0;
+    text-align: center;
+    display: block;
+    margin: 0 auto;
+}
+
+/* УВЕЛИЧЕНИЕ КОНТЕЙНЕРА И ТАБЛИЦЫ */
+
+/* 1. Увеличиваем максимальную ширину контейнера */
+.container {
+    max-width: 1800px; /* Значительно увеличили */
+    width: 95%; /* Занимает 95% доступного пространства */
+    margin: 0 auto;
+    padding: 25px; /* Увеличили отступы */
+}
+
+/* 2. Делаем таблицу более широкой */
+.performers-table {
+    width: 100%;
+    table-layout: fixed; /* Фиксированная раскладка для контроля ширины */
+}
+
+/* 3. Настраиваем ширину колонок */
+.performers-table th:nth-child(1), /* ИД */
+.performers-table td:nth-child(1) {
+    width: 50px; /* Узкая колонка для ID */
+}
+
+.performers-table th:nth-child(2), /* ФИО */
+.performers-table td:nth-child(2) {
+    width: 250px; /* Широкая колонка для ФИО */
+}
+
+.performers-table th:nth-child(3), /* Код доступа */
+.performers-table td:nth-child(3) {
+    width: 120px;
+}
+
+.performers-table th:nth-child(4), /* Пароль */
+.performers-table td:nth-child(4) {
+    width: 90px;
+}
+
+.performers-table th:nth-child(5), /* Роль Forms */
+.performers-table th:nth-child(6), /* Роль FGW */
+.performers-table td:nth-child(5),
+.performers-table td:nth-child(6) {
+    width: 150px;
+}
+
+.performers-table th:nth-child(7), /* Статус */
+.performers-table td:nth-child(7) {
+    width: 100px;
+    text-align: center;
+}
+
+.performers-table th:nth-child(8), /* Дата создания */
+.performers-table th:nth-child(10), /* Дата изменения */
+.performers-table td:nth-child(8),
+.performers-table td:nth-child(10) {
+    width: 160px;
+}
+
+.performers-table th:nth-child(9), /* ТН создателя */
+.performers-table th:nth-child(11), /* ТН изменяющего */
+.performers-table td:nth-child(9),
+.performers-table td:nth-child(11) {
+    width: 80px;
+}
+
+.performers-table th:nth-child(12), /* Операции */
+.performers-table td:nth-child(12) {
+    width: 130px;
+    text-align: center;
 }

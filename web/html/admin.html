@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="/web/css/admin/admin.css" type="text/css">
-<!--    <link rel="stylesheet" href="/web/css/style.css" type="text/css">-->
+    <script src="../js/admin.js"></script>
     <title>{{if .Title}}{{.Title}}{{else}}Панель Администратора{{end}}</title>
 </head>
 <body>
@@ -44,10 +44,10 @@
 <!-- Основное содержимое -->
 <main class="main-content">
     {{if eq .CurrentPage "dashboard"}}
-    <h1>Добро пожаловать</h1>
-    <p>Панель администратора</p>
+        <h1>Добро пожаловать</h1>
+        <p>Панель администратора</p>
     {{else if eq .CurrentPage "performers"}}
-    {{template "performers_content" .}}
+        {{template "performers_content" .}}
     {{end}}
 </main>
 </body>

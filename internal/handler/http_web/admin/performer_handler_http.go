@@ -106,16 +106,9 @@ func (p *PerformerHandlerHTML) UpdPerformerHTML(w http.ResponseWriter, r *http.R
 	switch r.Method {
 	case http.MethodPost:
 		p.processUpdFormPerformer(w, r)
-	case http.MethodGet:
-		p.renderUpdFormPerformer(w, r)
 	default:
 		http_err.SendErrorHTTP(w, http.StatusMethodNotAllowed, "", p.logg, r)
 	}
-}
-
-func (p *PerformerHandlerHTML) renderUpdFormPerformer(w http.ResponseWriter, r *http.Request) {
-	performerIdStr := r.URL.Query().Get("performerId")
-	http.Redirect(w, r, "/admin/performerId?performer="+performerIdStr, http.StatusFound)
 }
 
 func (p *PerformerHandlerHTML) processUpdFormPerformer(w http.ResponseWriter, r *http.Request) {

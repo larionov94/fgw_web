@@ -14,9 +14,9 @@
             <th>Роль FGW</th>
             <th>Статус</th>
             <th>Дата создания</th>
-            <th>ТН владельца</th>
+            <th>ТН<br> владельца</th>
             <th>Дата изменения</th>
-            <th>ТН владельца</th>
+            <th>ТН<br> владельца</th>
             <th>Операции</th>
         </tr>
         </thead>
@@ -62,7 +62,7 @@
                 <td>{{ .AuditRec.UpdatedBy}}</td>
                 <td>
                     <input type="hidden" name="performerId" value="{{ .Id}}">
-                    <input type="submit" value="Сохранить">
+                    <input class="save-btn" type="submit" value="Сохранить">
                 </td>
             </form>
             {{ else }}
@@ -71,18 +71,18 @@
             <td>{{.Pass}}</td>
             <td>
                 {{ $performer := . }}
-                {{ range $.Roles }}
-                {{ if eq .Id $performer.IdRoleAForms }}
-                {{ .Name }}
-                {{ end }}
+                    {{ range $.Roles }}
+                        {{ if eq .Id $performer.IdRoleAForms }}
+                        {{ .Name }}
+                    {{ end }}
                 {{ end }}
             </td>
             <td>
                 {{ $performer := . }}
-                {{ range $.Roles }}
-                {{ if eq .Id $performer.IdRoleAFGW }}
-                {{ .Name }}
-                {{ end }}
+                    {{ range $.Roles }}
+                        {{ if eq .Id $performer.IdRoleAFGW }}
+                        {{ .Name }}
+                    {{ end }}
                 {{ end }}
             </td>
             <td class="{{if .Archive}}status-archive{{else}}status-active{{end}}">
@@ -93,7 +93,7 @@
             <td>{{formatDateTime .AuditRec.UpdatedAt}}</td>
             <td>{{ .AuditRec.UpdatedBy}}</td>
             <td>
-                <a href="/admin/performers?performerId={{ .Id }}#performer_{{ .Id }}">Изменить</a>
+                <a href="/admin/performers?performerId={{ .Id }}">Изменить</a>
             </td>
             {{end}}
         </tr>
