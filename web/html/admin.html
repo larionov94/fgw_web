@@ -4,74 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/web/libs/bootstrap.css" type="text/css">
+    <link rel="stylesheet" href="/web/css/admin/admin.css" type="text/css">
     <script src="/web/libs/bootstrap.bundle.js"></script>
     <script src="../js/admin.js"></script>
+
     <title>{{ .Title }}</title>
-    <style>
-        .sidebar {
-            min-height: 100vh;
-            background-color: #f8f9fa;
-            border-right: 1px solid #dee2e6;
-            width: 250px;
-            position: fixed;
-            left: 0;
-            top: 0;
-            padding: 20px;
-            transition: all 0.3s;
-        }
-
-        .user-info {
-            padding: 15px;
-            background: white;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        .nav-link {
-            color: #333;
-            padding: 12px 15px;
-            margin: 5px 0;
-            border-radius: 6px;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .nav-link:hover {
-            background-color: #e9ecef;
-            color: #0d6efd;
-        }
-
-        .nav-link.active {
-            background-color: #0d6efd;
-            color: white;
-        }
-
-        .nav-link i {
-            width: 20px;
-            text-align: center;
-        }
-
-        .main-content {
-            margin-left: 270px;
-            padding: 30px;
-        }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                position: relative;
-                height: auto;
-                min-height: auto;
-            }
-
-            .main-content {
-                margin-left: 0;
-            }
-        }
-    </style>
 </head>
 <body>
 
@@ -92,20 +29,20 @@
 
         <!-- Навигационное меню -->
         <nav class="nav flex-column">
-            <a class="nav-link active" href="/admin">
-                <i>🏠</i>
+            <a class="nav-link {{ if eq .CurrentPage `dashboard` }}active{{ end }}" href="/admin">
+                <span>🏠</span>
                 <span>Главная</span>
             </a>
 
-            <a class="nav-link" href="/admin/performers">
-                <i>👥</i>
+            <a class="nav-link {{ if eq .CurrentPage `performers` }}active{{ end }}" href="/admin/performers">
+                <span>👥</span>
                 <span>Сотрудники</span>
             </a>
 
             <div class="mt-4 pt-3 border-top">
                 <a class="nav-link text-danger" href="/logout"
                    onclick="return confirm('Вы уверены что хотите выйти?')">
-                    <i>🚪</i>
+                    <span>🚪</span>
                     <span>Выйти</span>
                 </a>
             </div>
@@ -127,21 +64,5 @@
 
     </div>
 </div>
-
-<script>
-    // Активное состояние меню на основе текущего URL
-    document.addEventListener('DOMContentLoaded', function () {
-        const currentPath = window.location.pathname;
-        const navLinks = document.querySelectorAll('.nav-link');
-
-        navLinks.forEach(link => {
-            if (link.getAttribute('href') === currentPath) {
-                navLinks.forEach(l => l.classList.remove('active'));
-                link.classList.add('active');
-            }
-        });
-    });
-</script>
-
 </body>
 </html>

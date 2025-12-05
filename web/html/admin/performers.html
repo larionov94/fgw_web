@@ -1,5 +1,138 @@
 {{ define "performers_content" }}
 
-<h1>{{ .Title }}</h1>
+<div class="container-fluid px-0">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">{{ .Title }}</h1>
+    </div>
+
+    {{if .Performers}}
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" style="table-layout: fixed; width: 100%;">
+                    <colgroup>
+                        <col style="width: 60px;">  <!-- ТН -->
+                        <col style="width: 220px;"> <!-- ФИО -->
+                        <col style="width: 100px;"> <!-- Код доступа -->
+                        <col style="width: 60px;"> <!-- Пароль -->
+                        <col style="width: 110px;"> <!-- Роль Forms -->
+                        <col style="width: 110px;"> <!-- Роль FGW -->
+                        <col style="width: 90px;">  <!-- Статус -->
+                        <col style="width: 120px;"> <!-- Дата создания -->
+                        <col style="width: 60px;">  <!-- ТН владельца (созд.) -->
+                        <col style="width: 120px;"> <!-- Дата изменения -->
+                        <col style="width: 60px;">  <!-- ТН владельца (изм.) -->
+                        <col style="width: 70px;"> <!-- Операции -->
+                    </colgroup>
+                    <thead class="table-light">
+                    <tr>
+                        <th class="text-nowrap">ТН</th>
+                        <th class="text-nowrap">ФИО</th>
+                        <th class="text-nowrap">Код доступа</th>
+                        <th class="text-nowrap">Пароль</th>
+                        <th class="text-nowrap">Роль Forms</th>
+                        <th class="text-nowrap">Роль FGW</th>
+                        <th class="text-nowrap">Статус</th>
+                        <th class="text-nowrap">Дата создания</th>
+                        <th class="text-nowrap">ТН<br>владельца</th>
+                        <th class="text-nowrap">Дата изменения</th>
+                        <th class="text-nowrap">ТН<br>владельца</th>
+                        <th class="text-nowrap text-center">Операции</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {{ range .Performers }}
+                    <tr>
+                        <td class="fw-semibold text-truncate" title="{{ .Id }}">{{ .Id }}</td>
+                        <td class="text-truncate" title="{{ .FIO }}">{{ .FIO }}</td>
+                        <td class="text-truncate" title="{{ .BC }}"><code>{{ .BC }}</code></td>
+                        <td class="text-truncate" title="{{ .Pass }}"><code class="text-muted">{{ .Pass }}</code></td>
+                        <td class="text-truncate">
+                            <span class="badge bg-secondary">
+                                {{ $performer := . }}
+                                {{ range $.Roles }}
+                                {{ if eq .Id $performer.IdRoleAForms }}
+                                {{ .Name }}
+                                {{ end }}
+                                {{ end }}
+                            </span>
+                        </td>
+                        <td class="text-truncate">
+                            <span class="badge bg-secondary">
+                                {{ $performer := . }}
+                                {{ range $.Roles }}
+                                {{ if eq .Id $performer.IdRoleAFGW }}
+                                {{ .Name }}
+                                {{ end }}
+                                {{ end }}
+                            </span>
+                        </td>
+                        <td>
+                            {{ if .Archive }}
+                            <span class="badge bg-warning">Архивный</span>
+                            {{ else }}
+                            <span class="badge bg-success">Активный</span>
+                            {{ end }}
+                        </td>
+                        <td class="text-nowrap text-truncate"
+                            title="{{ formatDateTime .AuditRec.CreatedAt }}">
+                            {{ formatDateTime .AuditRec.CreatedAt }}
+                        </td>
+                        <td class="text-muted text-truncate"
+                            title="{{ .AuditRec.CreatedBy }}">
+                            {{ .AuditRec.CreatedBy }}
+                        </td>
+                        <td class="text-nowrap text-truncate"
+                            title="{{ formatDateTime .AuditRec.UpdatedAt }}">
+                            {{ formatDateTime .AuditRec.UpdatedAt }}
+                        </td>
+                        <td class="text-muted text-truncate"
+                            title="{{ .AuditRec.UpdatedBy }}">
+                            {{ .AuditRec.UpdatedBy }}
+                        </td>
+                        <td>
+                            <div class="d-flex justify-content-center gap-2">
+                                <button class="btn btn-sm btn-outline-primary" title="Редактировать">
+                                    <span>✏️</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {{ end }}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Пагинация (если нужно) -->
+    <!--    <nav aria-label="Навигация по страницам" class="mt-4">-->
+    <!--        <ul class="pagination justify-content-center">-->
+    <!--            <li class="page-item disabled">-->
+    <!--                <a class="page-link" href="#" tabindex="-1">Назад</a>-->
+    <!--            </li>-->
+    <!--            <li class="page-item active"><a class="page-link" href="#">1</a></li>-->
+    <!--            <li class="page-item"><a class="page-link" href="#">2</a></li>-->
+    <!--            <li class="page-item"><a class="page-link" href="#">3</a></li>-->
+    <!--            <li class="page-item">-->
+    <!--                <a class="page-link" href="#">Вперед</a>-->
+    <!--            </li>-->
+    <!--        </ul>-->
+    <!--    </nav>-->
+
+    <!--    {{ else }}-->
+    <!--    <div class="text-center py-5">-->
+    <!--        <div class="mb-3">-->
+    <!--            <span style="font-size: 3rem;">👥</span>-->
+    <!--        </div>-->
+    <!--        <h3 class="text-muted mb-3">Сотрудники не найдены</h3>-->
+    <!--        <p class="text-muted mb-4">Добавьте первого сотрудника в систему</p>-->
+    <!--        <button class="btn btn-primary">-->
+    <!--            <span>+</span> Добавить сотрудника-->
+    <!--        </button>-->
+    <!--    </div>-->
+    <!--    {{ end }}-->
+</div>
 
 {{ end }}

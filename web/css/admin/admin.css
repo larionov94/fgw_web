@@ -1,428 +1,185 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: Arial, sans-serif;
-}
-
-body {
-    display: flex;
-    min-height: 100vh;
-    background-color: #f5f6fa;
-}
-
+/*БОКОВОЕ МЕНЮ */
 .sidebar {
+    min-height: 100vh;
+    background-color: #f8f9fa;
+    border-right: 1px solid #dee2e6;
     width: 250px;
-    background: #2c3e50;
-    color: white;
-    padding: 20px 0;
     position: fixed;
-    height: 100vh;
-    overflow-y: auto;
-}
-
-.sidebar-header {
-    padding: 0 20px 20px 20px;
-    border-bottom: 1px solid #34495e;
-    margin-bottom: 20px;
+    left: 0;
+    top: 0;
+    padding: 20px;
+    transition: all 0.3s;
 }
 
 .user-info {
-    font-size: 14px;
-    color: #ecf0f1;
-    line-height: 1.5;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.menu {
-    list-style: none;
-}
-
-.menu-item {
-    padding: 0;
-}
-
-.menu-item:hover {
-    background: #34495e;
-}
-
-.menu-item.active {
-    background: #3498db;
-}
-
-.menu-link {
-    color: white;
-    text-decoration: none;
+.nav-link {
+    color: #333;
+    padding: 12px 15px;
+    margin: 5px 0;
+    border-radius: 6px;
+    transition: all 0.2s;
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 15px 20px;
-    transition: background 0.3s;
+    text-decoration: none;
 }
 
-.menu-link:hover {
-    background: #34495e;
+.nav-link:hover {
+    background-color: #e9ecef;
+    color: #0d6efd;
 }
 
-.menu-item.active .menu-link {
-    background: #3498db;
-}
-
-.menu-link.logout {
-    color: #e74c3c;
-}
-
-.menu-link.logout:hover {
-    background: #e74c3c;
+.nav-link.active {
+    background-color: #0d6efd;
     color: white;
+}
+
+.nav-link i {
+    width: 20px;
+    text-align: center;
 }
 
 .main-content {
-    flex: 1;
-    margin-left: 250px;
-    min-height: 100vh;
-}
-
-.container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 20px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-h1 {
-    color: #2c3e50;
-    margin-bottom: 25px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #3498db;
-}
-
-/* Стили для таблицы сотрудников */
-.performers-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    font-size: 14px;
-}
-
-.performers-table th {
-    background-color: #f8f9fa;
-    padding: 12px 15px;
-    text-align: left;
-    font-weight: 600;
-    color: #495057;
-    border-bottom: 2px solid #dee2e6;
-    white-space: nowrap;
-}
-
-.performers-table td {
-    padding: 12px 15px;
-    border-bottom: 1px solid #e9ecef;
-    vertical-align: middle;
-}
-
-.performers-table tbody tr:hover {
-    background-color: #f8f9fa;
-}
-
-.performers-table tr.archive {
-    background-color: #f8f9fa;
-    color: #6c757d;
-}
-
-.performers-table tr.archive:hover {
-    background-color: #e9ecef;
-}
-
-/* Статусы */
-.status-active {
-    color: #27ae60;
-    font-weight: 100;
-    padding: 4px 10px;
-    background-color: #e8f5e9;
-    border-radius: 4px;
-    display: block;
-}
-
-.status-archive {
-    color: #e74c3c;
-    font-weight: 100;
-    padding: 4px 10px;
-    background-color: #ffebee;
-    border-radius: 4px;
-    display: inline-block;
-}
-
-/* Формы в таблице */
-.performers-table form {
-    display: contents; /* Важно! Позволяет форме быть частью таблицы */
-}
-
-.performers-table select,
-.performers-table input[type="number"],
-.performers-table input[type="submit"] {
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.performers-table select {
-    background-color: white;
-    cursor: pointer;
-}
-
-.performers-table input[type="submit"] {
-    background-color: #3498db;
-    color: white;
-    border: none;
-    cursor: pointer;
-    font-weight: 500;
-    transition: background 0.3s;
-    padding: 8px 16px;
-    width: auto;
-    min-width: 100px;
-}
-
-.performers-table input[type="submit"]:hover {
-    background-color: #2980b9;
-}
-
-.performers-table input[type="number"] {
-    width: 80px;
-}
-
-/* Ссылки */
-.performers-table a {
-    color: #3498db;
-    text-decoration: none;
-    font-weight: 500;
-    padding: 6px 12px;
-    border: 1px solid #3498db;
-    border-radius: 4px;
-    transition: all 0.3s;
-    display: inline-block;
-}
-
-.performers-table a:hover {
-    background-color: #3498db;
-    color: white;
-}
-
-/* Итоговая информация */
-.performers-table + p {
-    margin-top: 20px;
-    font-size: 14px;
-    color: #6c757d;
-    text-align: right;
-}
-
-/* Состояние пустого списка */
-p[style*="text-align: center"] {
-    padding: 40px;
-    font-size: 16px;
-    color: #6c757d;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    margin-top: 20px;
-}
-
-/* Фикс для выравнивания ячеек с формами */
-.performers-table tr td:first-child {
-    font-weight: 500;
-    color: #2c3e50;
-}
-
-/* Адаптивность */
-@media (max-width: 1024px) {
-    .container {
-        margin: 0 15px;
-        padding: 15px;
-    }
-
-    .sidebar {
-        width: 220px;
-    }
-
-    .main-content {
-        margin-left: 220px;
-    }
+    margin-left: 270px;
+    padding: 30px;
 }
 
 @media (max-width: 768px) {
-    body {
-        flex-direction: column;
-    }
-
     .sidebar {
-        position: relative;
         width: 100%;
+        position: relative;
         height: auto;
+        min-height: auto;
     }
 
     .main-content {
         margin-left: 0;
-        padding: 15px;
-    }
-
-    .performers-table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-    }
-
-    .performers-table th,
-    .performers-table td {
-        padding: 8px 10px;
-        font-size: 13px;
-    }
-
-    .performers-table input[type="number"] {
-        width: 60px;
     }
 }
 
-@media (max-width: 480px) {
-    .container {
-        padding: 10px;
-        margin: 0 10px;
-    }
+/* admin.css - Минималистичные стили для таблицы */
 
-    h1 {
-        font-size: 1.5rem;
-    }
-
-    .menu-link {
-        padding: 12px 15px;
-        font-size: 14px;
-    }
-
-    .performers-table th,
-    .performers-table td {
-        padding: 6px 8px;
-        font-size: 12px;
-    }
-}
-.performers-table {
-    font-size: 12px;
+/* Основные стили таблицы */
+.table {
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.875rem;
 }
 
-.performers-table th {
-    font-size: 12px;
-    padding: 10px 12px;
+.table th {
     font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    padding: 12px 16px;
+    background-color: #f8f9fa;
 }
 
-.performers-table td {
-    font-size: 12px;
-    padding: 8px 10px;
+.table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #eef0f2;
+    vertical-align: middle;
 }
 
-/* Уменьшаем элементы внутри таблицы */
-.performers-table select,
-.performers-table input[type="number"],
-.performers-table input[type="submit"] {
-    font-size: 12px;
-    padding: 6px 10px;
+.table-hover tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.02);
 }
 
-.performers-table a {
-    font-size: 12px;
+/* ТАБЛИЦА*/
+/* Карточка для таблицы */
+.card {
+    border: 1px solid #e9ecef;
+    background: #fff;
+}
+
+/* Бейджи статусов */
+.badge {
     padding: 4px 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 4px;
 }
 
-/* Уменьшаем бейджи статусов */
-/*.status-active,*/
-/*.status-archive {*/
-/*    font-size: 11px;*/
-/*    padding: 4px 8px;*/
-/*    min-width: 40px;*/
+.bg-success {
+    background-color: #d1e7dd !important;
+    color: #0f5132;
+}
+
+.bg-warning {
+    background-color: #fff3cd !important;
+    color: #664d03;
+}
+
+.bg-secondary {
+    background-color: #e9ecef !important;
+    color: #495057;
+}
+
+/* Кнопки операций */
+.btn-sm {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+.btn-outline-primary {
+    color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn-outline-danger {
+    color: #dc3545;
+    border-color: #dc3545;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-danger:hover {
+    opacity: 0.9;
+}
+
+/* Пагинация */
+/*.pagination .page-link {*/
+/*    border: 1px solid #dee2e6;*/
+/*    color: #495057;*/
+/*    margin: 0 2px;*/
+/*    border-radius: 4px;*/
 /*}*/
-/* Просто фиксируем ширину последнего столбца */
-.performers-table td:last-child {
-    width: 130px;
-    text-align: center;
+
+/*.pagination .page-item.active .page-link {*/
+/*    background-color: #0d6efd;*/
+/*    border-color: #0d6efd;*/
+/*}*/
+
+/* Код стили */
+code {
+    padding: 2px 6px;
+    background-color: #f8f9fa;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85em;
 }
 
-/* Делаем кнопки одинаковой ширины */
-.performers-table td:last-child a,
-.performers-table td:last-child input[type="submit"] {
-    width: 110px;
-    padding: 7px 0;
-    text-align: center;
-    display: block;
-    margin: 0 auto;
-}
+/* Адаптивность */
+@media (max-width: 768px) {
+    .table-responsive {
+        border: 0;
+    }
 
-/* УВЕЛИЧЕНИЕ КОНТЕЙНЕРА И ТАБЛИЦЫ */
+    .table th,
+    .table td {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+    }
 
-/* 1. Увеличиваем максимальную ширину контейнера */
-.container {
-    max-width: 1800px; /* Значительно увеличили */
-    width: 95%; /* Занимает 95% доступного пространства */
-    margin: 0 auto;
-    padding: 25px; /* Увеличили отступы */
-}
-
-/* 2. Делаем таблицу более широкой */
-.performers-table {
-    width: 100%;
-    table-layout: fixed; /* Фиксированная раскладка для контроля ширины */
-}
-
-/* 3. Настраиваем ширину колонок */
-.performers-table th:nth-child(1), /* ИД */
-.performers-table td:nth-child(1) {
-    width: 50px; /* Узкая колонка для ID */
-}
-
-.performers-table th:nth-child(2), /* ФИО */
-.performers-table td:nth-child(2) {
-    width: 250px; /* Широкая колонка для ФИО */
-}
-
-.performers-table th:nth-child(3), /* Код доступа */
-.performers-table td:nth-child(3) {
-    width: 120px;
-}
-
-.performers-table th:nth-child(4), /* Пароль */
-.performers-table td:nth-child(4) {
-    width: 90px;
-}
-
-.performers-table th:nth-child(5), /* Роль Forms */
-.performers-table th:nth-child(6), /* Роль FGW */
-.performers-table td:nth-child(5),
-.performers-table td:nth-child(6) {
-    width: 150px;
-}
-
-.performers-table th:nth-child(7), /* Статус */
-.performers-table td:nth-child(7) {
-    width: 100px;
-    text-align: center;
-}
-
-.performers-table th:nth-child(8), /* Дата создания */
-.performers-table th:nth-child(10), /* Дата изменения */
-.performers-table td:nth-child(8),
-.performers-table td:nth-child(10) {
-    width: 160px;
-}
-
-.performers-table th:nth-child(9), /* ТН создателя */
-.performers-table th:nth-child(11), /* ТН изменяющего */
-.performers-table td:nth-child(9),
-.performers-table td:nth-child(11) {
-    width: 80px;
-}
-
-.performers-table th:nth-child(12), /* Операции */
-.performers-table td:nth-child(12) {
-    width: 130px;
-    text-align: center;
+    .btn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
 }
