@@ -414,6 +414,8 @@ func (a *AuthHandlerHTML) renderPage(w http.ResponseWriter, tmpl string, data in
 
 	parseTmpl, err := template.New(tmpl).Funcs(
 		template.FuncMap{
+			"add":            func(a, b int) int { return a + b },
+			"sub":            func(a, b int) int { return a - b },
 			"formatDateTime": convert.FormatDateTime,
 		}).ParseFiles(templatePath)
 
@@ -440,6 +442,8 @@ func (a *AuthHandlerHTML) renderPages(
 
 	parseTmpl, err := template.New(tmpl).Funcs(
 		template.FuncMap{
+			"add":            func(a, b int) int { return a + b },
+			"sub":            func(a, b int) int { return a - b },
 			"formatDateTime": convert.FormatDateTime,
 		}).ParseFiles(templatePaths...)
 

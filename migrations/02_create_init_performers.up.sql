@@ -125,3 +125,50 @@ BEGIN
     SELECT @Exists AS exists_flag;
 END
 GO;
+
+CREATE PROCEDURE dbo.svPerformersCount -- ХП считает общее кол-во сотрудников
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT COUNT(*) FROM dbo.svPerformers;
+
+END
+GO;
+
+CREATE PROCEDURE dbo.svPerformersPagination -- ХП получает сотрудников с нумерации страниц.
+    @Offset int,
+    @Limit int
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT id,
+           fio,
+           bc,
+           pass,
+           archive,
+           id_role_a_forms,
+           id_role_a_fgw,
+           created_at,
+           created_by,
+           updated_at,
+           updated_by
+    FROM (SELECT id,
+                 fio,
+                 bc,
+                 pass,
+                 archive,
+                 id_role_a_forms,
+                 id_role_a_fgw,
+                 created_at,
+                 created_by,
+                 updated_at,
+                 updated_by,
+                 ROW_NUMBER() OVER ( ORDER BY id DESC ) AS RowNum
+          FROM dbo.svPerformers) AS Paginated
+    WHERE RowNum > @Offset
+      AND RowNum <= @Limit;
+
+END
+GO;

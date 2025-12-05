@@ -26,6 +26,8 @@ type PerformerRepository interface {
 	FindById(ctx context.Context, id int) (*model.Performer, error)
 	UpdById(ctx context.Context, id int, performer *model.Performer) error
 	ExistById(ctx context.Context, id int) (bool, error)
+	GetPerformersCount(ctx context.Context) (int, error)
+	GetPerformersWithPagination(ctx context.Context, offset, limit int) ([]*model.Performer, error)
 }
 
 // All получить всех сотрудников из БД.
@@ -138,4 +140,61 @@ func (p *PerformerRepo) ExistById(ctx context.Context, id int) (bool, error) {
 	}
 
 	return exists, nil
+}
+
+// GetPerformersCount кол-во сотрудников.
+func (p *PerformerRepo) GetPerformersCount(ctx context.Context) (int, error) {
+	var count int
+	if err := p.mssql.QueryRowContext(ctx, FGWsvPerformersCountQuery).Scan(&count); err != nil {
+		p.logg.LogE(msg.E3217, err)
+
+		return 0, err
+	}
+
+	return count, nil
+}
+
+// GetPerformersWithPagination получает сотрудников с нумерации страниц.
+func (p *PerformerRepo) GetPerformersWithPagination(ctx context.Context, offset, limit int) ([]*model.Performer, error) {
+	startRow := offset
+	endRow := offset + limit
+
+	rows, err := p.mssql.QueryContext(ctx, FGWsvPerformersPaginationQuery, startRow, endRow)
+	if err != nil {
+		return nil, err
+	}
+	defer db.RowsClose(rows)
+
+	var performers []*model.Performer
+	for rows.Next() {
+		var performer model.Performer
+
+		if err = rows.Scan(
+			&performer.Id,
+			&performer.FIO,
+			&performer.BC,
+			&performer.Pass,
+			&performer.Archive,
+			&performer.IdRoleAForms,
+			&performer.IdRoleAFGW,
+			&performer.AuditRec.CreatedAt,
+			&performer.AuditRec.CreatedBy,
+			&performer.AuditRec.UpdatedAt,
+			&performer.AuditRec.UpdatedBy,
+		); err != nil {
+			p.logg.LogE(msg.E3204, err)
+
+			return nil, err
+		}
+
+		performers = append(performers, &performer)
+	}
+
+	if err = rows.Err(); err != nil {
+		p.logg.LogE(msg.E3205, err)
+
+		return nil, err
+	}
+
+	return performers, nil
 }

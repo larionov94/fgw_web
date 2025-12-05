@@ -23,6 +23,8 @@ type PerformerUseCase interface {
 	UpdPerformer(ctx context.Context, id int, performer *model.Performer) error
 	ExistPerformer(ctx context.Context, id int) (bool, error)
 	FindByIdPerformer(ctx context.Context, id int) (*model.Performer, error)
+	GetPerformersCount(ctx context.Context) (int, error)
+	GetPerformersWithPagination(ctx context.Context, offset, limit int) ([]*model.Performer, error)
 }
 
 func (p *PerformerService) GetAllPerformers(ctx context.Context) ([]*model.Performer, error) {
@@ -97,4 +99,12 @@ func (p *PerformerService) FindByIdPerformer(ctx context.Context, id int) (*mode
 
 func (p *PerformerService) ExistPerformer(ctx context.Context, id int) (bool, error) {
 	return p.performerRepo.ExistById(ctx, id)
+}
+
+func (p *PerformerService) GetPerformersCount(ctx context.Context) (int, error) {
+	return p.performerRepo.GetPerformersCount(ctx)
+}
+
+func (p *PerformerService) GetPerformersWithPagination(ctx context.Context, offset, limit int) ([]*model.Performer, error) {
+	return p.performerRepo.GetPerformersWithPagination(ctx, offset, limit)
 }
