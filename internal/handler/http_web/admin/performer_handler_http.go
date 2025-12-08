@@ -11,6 +11,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -114,6 +115,10 @@ func (p *PerformerHandlerHTML) UpdPerformerHTML(w http.ResponseWriter, r *http.R
 func (p *PerformerHandlerHTML) processUpdFormPerformer(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
+	// Определяем, это iframe запрос или обычный
+	referer := r.Header.Get("Referer")
+	isIframeRequest := strings.Contains(referer, "performers") && r.Method == "POST"
+
 	if err := r.ParseForm(); err != nil {
 		p.renderErrorPage(w, http.StatusBadRequest, msg.H7007, r)
 
@@ -163,7 +168,14 @@ func (p *PerformerHandlerHTML) processUpdFormPerformer(w http.ResponseWriter, r 
 		return
 	}
 
-	http.Redirect(w, r, urlAdminPerformers, http.StatusSeeOther)
+	// Для iframe запроса возвращаем пустую страницу или скрипт
+	if isIframeRequest {
+		w.Write([]byte("<script>window.parent.postMessage('saved', '*')</script>"))
+	} else {
+		// Старый редирект для обычных запросов (на случай прямого обращения)
+		http.Redirect(w, r, urlAdminPerformers, http.StatusSeeOther)
+	}
+	//http.Redirect(w, r, urlAdminPerformers, http.StatusSeeOther)
 }
 
 func (p *PerformerHandlerHTML) markEditingPerformer(id string, performers []*model.Performer) {

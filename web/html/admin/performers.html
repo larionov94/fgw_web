@@ -10,7 +10,7 @@
     <div class="card shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover mb-0" style="table-layout: fixed; width: 100%;">
+                <table class="table table-hover mb-0" style="table-layout: fixed; width: 100%;" id="performersTable">
                     <colgroup>
                         <col style="width: 60px;">  <!-- ТН -->
                         <col style="width: 220px;"> <!-- ФИО -->
@@ -23,7 +23,7 @@
                         <col style="width: 60px;">  <!-- ТН владельца (созд.) -->
                         <col style="width: 120px;"> <!-- Дата изменения -->
                         <col style="width: 60px;">  <!-- ТН владельца (изм.) -->
-                        <col style="width: 70px;"> <!-- Операции -->
+                        <col style="width: 140px;"> <!-- Операции (увеличена ширина) -->
                     </colgroup>
                     <thead class="table-light">
                     <tr>
@@ -42,14 +42,17 @@
                     </tr>
                     </thead>
                     <tbody>
+
                     {{ range .Performers }}
-                    <tr>
-                        <td class="fw-semibold text-truncate" title="{{ .Id }}">{{ .Id }}</td>
-                        <td class="text-truncate" title="{{ .FIO }}">{{ .FIO }}</td>
-                        <td class="text-truncate" title="{{ .BC }}"><code>{{ .BC }}</code></td>
-                        <td class="text-truncate" title="{{ .Pass }}"><code class="text-muted">{{ .Pass }}</code></td>
-                        <td class="text-truncate">
-                            <span class="badge bg-secondary">
+                    <tr id="performer-{{ .Id }}" data-id="{{ .Id }}">
+                        <td class="fw-semibold">{{ .Id }}</td>
+                        <td>{{ .FIO }}</td>
+                        <td>{{ .BC }}</td>
+                        <td>{{ .Pass }}</td>
+
+                        <!-- Роль Forms - отображаемая версия -->
+                        <td class="view-mode forms-role">
+                            <span class="badge bg-info">
                                 {{ $performer := . }}
                                 {{ range $.Roles }}
                                 {{ if eq .Id $performer.IdRoleAForms }}
@@ -58,8 +61,10 @@
                                 {{ end }}
                             </span>
                         </td>
-                        <td class="text-truncate">
-                            <span class="badge bg-secondary">
+
+                        <!-- Роль FGW - отображаемая версия -->
+                        <td class="view-mode fgw-role">
+                            <span class="badge bg-info">
                                 {{ $performer := . }}
                                 {{ range $.Roles }}
                                 {{ if eq .Id $performer.IdRoleAFGW }}
@@ -68,6 +73,35 @@
                                 {{ end }}
                             </span>
                         </td>
+
+                        <!-- Роль Forms - редактируемая версия (скрыта по умолчанию) -->
+                        <td class="edit-mode" style="display: none;">
+                            <label>
+                                <select class="form-select form-select-sm role-forms-select" name="idRoleAForms">
+                                    {{ $performer := . }}
+                                    {{ range $.Roles }}
+                                    <option value="{{ .Id }}" {{ if eq .Id $performer.IdRoleAForms }}selected{{ end }}>
+                                        {{ .Name }}
+                                    </option>
+                                    {{ end }}
+                                </select>
+                            </label>
+                        </td>
+
+                        <!-- Роль FGW - редактируемая версия (скрыта по умолчанию) -->
+                        <td class="edit-mode" style="display: none;">
+                            <label>
+                                <select class="form-select form-select-sm role-fgw-select" name="idRoleAFGW">
+                                    {{ $performer := . }}
+                                    {{ range $.Roles }}
+                                    <option value="{{ .Id }}" {{ if eq .Id $performer.IdRoleAFGW }}selected{{ end }}>
+                                        {{ .Name }}
+                                    </option>
+                                    {{ end }}
+                                </select>
+                            </label>
+                        </td>
+
                         <td>
                             {{ if .Archive }}
                             <span class="badge bg-warning">Архивный</span>
@@ -75,27 +109,30 @@
                             <span class="badge bg-success">Активный</span>
                             {{ end }}
                         </td>
-                        <td class="text-nowrap text-truncate"
-                            title="{{ formatDateTime .AuditRec.CreatedAt }}">
-                            {{ formatDateTime .AuditRec.CreatedAt }}
-                        </td>
-                        <td class="text-muted text-truncate"
-                            title="{{ .AuditRec.CreatedBy }}">
-                            {{ .AuditRec.CreatedBy }}
-                        </td>
-                        <td class="text-nowrap text-truncate"
-                            title="{{ formatDateTime .AuditRec.UpdatedAt }}">
-                            {{ formatDateTime .AuditRec.UpdatedAt }}
-                        </td>
-                        <td class="text-muted text-truncate"
-                            title="{{ .AuditRec.UpdatedBy }}">
-                            {{ .AuditRec.UpdatedBy }}
-                        </td>
+                        <td>{{ formatDateTime .AuditRec.CreatedAt }}</td>
+                        <td>{{ .AuditRec.CreatedBy }}</td>
+                        <td>{{ formatDateTime .AuditRec.UpdatedAt }}</td>
+                        <td>{{ .AuditRec.UpdatedBy }}</td>
+
+                        <!-- Кнопки операций -->
                         <td>
                             <div class="d-flex justify-content-center gap-2">
-                                <button class="btn btn-sm btn-outline-primary" title="Редактировать">
+                                <!-- Кнопка редактирования (отображается в view-mode) -->
+                                <button class="btn btn-sm btn-outline-primary edit-btn"
+                                        title="Редактировать"
+                                        data-id="{{ .Id }}">
                                     <span>✏️</span>
                                 </button>
+
+                                <!-- Кнопки сохранения/отмены (скрыты в view-mode) -->
+                                <div class="edit-buttons" style="display: none;">
+                                    <button class="btn btn-sm btn-success save-btn" title="Сохранить">
+                                        <span>✓</span>
+                                    </button>
+                                    <button class="btn btn-sm btn-secondary cancel-btn" title="Отмена">
+                                        <span>✗</span>
+                                    </button>
+                                </div>
                             </div>
                         </td>
                     </tr>
@@ -106,33 +143,25 @@
         </div>
     </div>
 
-    <!-- Пагинация (если нужно) -->
-    <!--    <nav aria-label="Навигация по страницам" class="mt-4">-->
-    <!--        <ul class="pagination justify-content-center">-->
-    <!--            <li class="page-item disabled">-->
-    <!--                <a class="page-link" href="#" tabindex="-1">Назад</a>-->
-    <!--            </li>-->
-    <!--            <li class="page-item active"><a class="page-link" href="#">1</a></li>-->
-    <!--            <li class="page-item"><a class="page-link" href="#">2</a></li>-->
-    <!--            <li class="page-item"><a class="page-link" href="#">3</a></li>-->
-    <!--            <li class="page-item">-->
-    <!--                <a class="page-link" href="#">Вперед</a>-->
-    <!--            </li>-->
-    <!--        </ul>-->
-    <!--    </nav>-->
+    <!-- Скрытая форма для отправки данных -->
+    <form id="updateForm" method="POST" action="/admin/performers/upd" style="display: none;">
+        <input type="hidden" name="performerId" id="updatePerformerId">
+        <input type="hidden" name="idRoleAForms" id="updateRoleForms">
+        <input type="hidden" name="idRoleAFGW" id="updateRoleFGW">
+    </form>
 
-    <!--    {{ else }}-->
-    <!--    <div class="text-center py-5">-->
-    <!--        <div class="mb-3">-->
-    <!--            <span style="font-size: 3rem;">👥</span>-->
-    <!--        </div>-->
-    <!--        <h3 class="text-muted mb-3">Сотрудники не найдены</h3>-->
-    <!--        <p class="text-muted mb-4">Добавьте первого сотрудника в систему</p>-->
-    <!--        <button class="btn btn-primary">-->
-    <!--            <span>+</span> Добавить сотрудника-->
-    <!--        </button>-->
-    <!--    </div>-->
-    <!--    {{ end }}-->
+    {{ else }}
+    <div class="text-center py-5">
+        <div class="mb-3">
+            <span style="font-size: 3rem;">👥</span>
+        </div>
+        <h3 class="text-muted mb-3">Сотрудники не найдены</h3>
+        <p class="text-muted mb-4">Добавьте первого сотрудника в систему</p>
+        <button class="btn btn-primary">
+            <span>+</span> Добавить сотрудника
+        </button>
+    </div>
+    {{ end }}
 </div>
 
 {{ end }}
