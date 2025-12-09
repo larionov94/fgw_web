@@ -1,54 +1,69 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/web/libs/bootstrap.css" type="text/css">
     <link rel="stylesheet" href="/web/css/admin/admin.css" type="text/css">
-    <script src="../js/admin.js"></script>
-    <title>{{if .Title}}{{.Title}}{{else}}Панель Администратора{{end}}</title>
+    <script src="/web/libs/bootstrap.bundle.js"></script>
+    <script src="/web/js/admin.js"></script>
+    <script src="/web/js/performers.js"></script>
+
+    <title>{{ .Title }}</title>
 </head>
 <body>
-<!-- Боковое меню -->
-<nav class="sidebar">
-    <div class="sidebar-header">
-        <div class="user-info">
-            Табельный номер: {{ .PerformerId }}<br>
-            Роль: {{ .PerformerRole }}<br>
-            Сотрудник: {{ .PerformerFIO }}
-        </div>
-    </div>
 
-    <ul class="menu">
-        <li class="menu-item {{if eq .CurrentPage `dashboard` }}active{{end}}">
-            <a href="/admin" class="menu-link">
+<div class="d-flex">
+    <!-- Боковое меню -->
+    <div class="sidebar">
+        <!-- Информация о пользователе -->
+        <div class="user-info">
+            <div class="fw-bold">Табельный номер:</div>
+            <div class="mb-2">{{ .PerformerId }}</div>
+
+            <div class="fw-bold">Роль:</div>
+            <div class="mb-2">{{ .PerformerRole }}</div>
+
+            <div class="fw-bold">ФИО:</div>
+            <div>{{ .PerformerFIO }}</div>
+        </div>
+
+        <!-- Навигационное меню -->
+        <nav class="nav flex-column">
+            <a class="nav-link {{ if eq .CurrentPage `dashboard` }}active{{ end }}" href="/admin">
                 <span>🏠</span>
                 <span>Главная</span>
             </a>
-        </li>
-        <li class="menu-item {{if eq .CurrentPage `performers`}}active{{end}}">
-            <a href="/admin/performers" class="menu-link">
+
+            <a class="nav-link {{ if eq .CurrentPage `performers` }}active{{ end }}" href="/admin/performers">
                 <span>👥</span>
                 <span>Сотрудники</span>
             </a>
-        </li>
-        <li class="menu-item">
-            <a href="/logout"
-               class="menu-link logout"
-               onclick="return confirm('Вы уверены что хотите выйти?')">
-                <span>🚪</span>
-                <span>Выйти</span>
-            </a>
-        </li>
-    </ul>
-</nav>
 
-<!-- Основное содержимое -->
-<main class="main-content">
-    {{if eq .CurrentPage "dashboard"}}
-        <h1>Добро пожаловать</h1>
-        <p>Панель администратора</p>
-    {{else if eq .CurrentPage "performers"}}
-        {{template "performers_content" .}}
-    {{end}}
-</main>
+            <div class="mt-4 pt-3 border-top">
+                <a class="nav-link text-danger" href="/logout"
+                   onclick="return confirm('Вы уверены что хотите выйти?')">
+                    <span>🚪</span>
+                    <span>Выйти</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Основное содержимое -->
+    <div class="main-content flex-grow-1">
+        {{ if eq .CurrentPage `dashboard` }}
+
+        <h1 class="mb-4">Добро пожаловать, {{ .PerformerFIO }}</h1>
+        <p class="lead">Вы вошли в систему как <strong>{{ .PerformerRole }}</strong>
+
+        {{ else if eq .CurrentPage `performers` }}
+
+        {{ template "performers_content" . }}
+
+        {{ end }}
+
+    </div>
+</div>
 </body>
 </html>

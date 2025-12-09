@@ -1,220 +1,157 @@
-{{define "performers_content"}}
-<div class="container">
-    <h1>{{.Title}}</h1>
+{{ define "performers_content" }}
+
+<div class="container-fluid px-0">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">{{ .Title }}</h1>
+    </div>
 
     {{if .Performers}}
-    <div class="table-info">
-        <span>Всего сотрудников: {{.TotalCount}}</span>
-        <span>Показано: {{.StartItem}} - {{.EndItem}} из {{.TotalCount}}</span>
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" style="table-layout: fixed; width: 100%;" id="performersTable">
+                    <colgroup>
+                        <col style="width: 60px;">  <!-- ТН -->
+                        <col style="width: 220px;"> <!-- ФИО -->
+                        <col style="width: 100px;"> <!-- Код доступа -->
+                        <col style="width: 60px;"> <!-- Пароль -->
+                        <col style="width: 110px;"> <!-- Роль Forms -->
+                        <col style="width: 110px;"> <!-- Роль FGW -->
+                        <col style="width: 90px;">  <!-- Статус -->
+                        <col style="width: 120px;"> <!-- Дата создания -->
+                        <col style="width: 60px;">  <!-- ТН владельца (созд.) -->
+                        <col style="width: 120px;"> <!-- Дата изменения -->
+                        <col style="width: 60px;">  <!-- ТН владельца (изм.) -->
+                        <col style="width: 140px;"> <!-- Операции (увеличена ширина) -->
+                    </colgroup>
+                    <thead class="table-light">
+                    <tr>
+                        <th class="text-nowrap">ТН</th>
+                        <th class="text-nowrap">ФИО</th>
+                        <th class="text-nowrap">Код доступа</th>
+                        <th class="text-nowrap">Пароль</th>
+                        <th class="text-nowrap">Роль Forms</th>
+                        <th class="text-nowrap">Роль FGW</th>
+                        <th class="text-nowrap">Статус</th>
+                        <th class="text-nowrap">Дата создания</th>
+                        <th class="text-nowrap">ТН<br>владельца</th>
+                        <th class="text-nowrap">Дата изменения</th>
+                        <th class="text-nowrap">ТН<br>владельца</th>
+                        <th class="text-nowrap text-center">Операции</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+
+                    {{ range .Performers }}
+                    <tr id="performer-{{ .Id }}" data-id="{{ .Id }}">
+                        <td class="fw-semibold">{{ .Id }}</td>
+                        <td>{{ .FIO }}</td>
+                        <td>{{ .BC }}</td>
+                        <td>{{ .Pass }}</td>
+
+                        <!-- Роль Forms - отображаемая версия -->
+                        <td class="view-mode forms-role">
+                            <span class="badge bg-info">
+                                {{ $performer := . }}
+                                {{ range $.Roles }}
+                                {{ if eq .Id $performer.IdRoleAForms }}
+                                {{ .Name }}
+                                {{ end }}
+                                {{ end }}
+                            </span>
+                        </td>
+
+                        <!-- Роль FGW - отображаемая версия -->
+                        <td class="view-mode fgw-role">
+                            <span class="badge bg-info">
+                                {{ $performer := . }}
+                                {{ range $.Roles }}
+                                {{ if eq .Id $performer.IdRoleAFGW }}
+                                {{ .Name }}
+                                {{ end }}
+                                {{ end }}
+                            </span>
+                        </td>
+
+                        <!-- Роль Forms - редактируемая версия (скрыта по умолчанию) -->
+                        <td class="edit-mode" style="display: none;">
+                            <label>
+                                <select class="form-select form-select-sm role-forms-select" name="idRoleAForms"
+                                        data-original="{{ .IdRoleAForms }}" >
+                                    {{ $performer := . }}
+                                    {{ range $.Roles }}
+                                    <option value="{{ .Id }}" {{ if eq .Id $performer.IdRoleAForms }}selected{{ end }}>
+                                        {{ .Name }}
+                                    </option>
+                                    {{ end }}
+                                </select>
+                            </label>
+                        </td>
+
+                        <!-- Роль FGW - редактируемая версия (скрыта по умолчанию) -->
+                        <td class="edit-mode" style="display: none;">
+                            <label>
+                                <select class="form-select form-select-sm role-fgw-select" name="idRoleAFGW"
+                                        data-original="{{ .IdRoleAFGW }}">
+                                    {{ $performer := . }}
+                                    {{ range $.Roles }}
+                                    <option value="{{ .Id }}" {{ if eq .Id $performer.IdRoleAFGW }}selected{{ end }}>
+                                        {{ .Name }}
+                                    </option>
+                                    {{ end }}
+                                </select>
+                            </label>
+                        </td>
+
+                        <td>
+                            {{ if .Archive }}
+                            <span class="badge bg-warning">Архивный</span>
+                            {{ else }}
+                            <span class="badge bg-success">Активный</span>
+                            {{ end }}
+                        </td>
+                        <td>{{ formatDateTime .AuditRec.CreatedAt }}</td>
+                        <td>{{ .AuditRec.CreatedBy }}</td>
+                        <td class="update-at">{{ formatDateTime .AuditRec.UpdatedAt }}</td>
+                        <td class="update-by">{{ .AuditRec.UpdatedBy }}</td>
+
+                        <!-- Кнопки операций -->
+                        <td>
+                            <div class="d-flex justify-content-center gap-2">
+                                <!-- Кнопка редактирования (отображается в view-mode) -->
+                                <button class="btn btn-sm btn-outline-primary edit-btn"
+                                        title="Редактировать">
+                                    <span>✏️</span>
+                                </button>
+
+                                <!-- Кнопки сохранения/отмены (скрыты в view-mode) -->
+                                <div class="edit-buttons" style="display: none;">
+                                    <button class="btn btn-sm btn-success save-btn" title="Сохранить">
+                                        <span>✓</span>
+                                    </button>
+                                    <button class="btn btn-sm btn-secondary cancel-btn" title="Отмена">
+                                        <span>✗</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {{ end }}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
-    <table class="performers-table">
-        <thead>
-        <tr>
-            <th>ИД</th>
-            <th>ФИО</th>
-            <th>Код доступа</th>
-            <th>Пароль</th>
-            <th>Роль Forms</th>
-            <th>Роль FGW</th>
-            <th>Статус</th>
-            <th>Дата создания</th>
-            <th>ТН<br> владельца</th>
-            <th>Дата изменения</th>
-            <th>ТН<br> владельца</th>
-            <th>Операции</th>
-        </tr>
-        </thead>
-        <tbody>
-        {{range .Performers}}
-        <tr id="performer_{{ .Id }}" {{if .Archive}}class="archive" {{end}}>
-            <td>{{ .Id }}</td>
-            {{if .IsEditing}}
-            <form method="POST" action="/admin/performers/upd">
-                <td>{{.FIO}}</td>
-                <td>{{.BC}}</td>
-                <td>{{.Pass}}</td>
-                <td>
-                    <label>
-                        <select name="idRoleAForms">
-                            {{ $performer := . }}
-                            {{ range $.Roles }}
-                            <option value="{{ .Id }}"
-                                    {{ if eq .Id $performer.IdRoleAForms }}selected{{ end }}>{{ .Name }}
-                            </option>
-                            {{ end }}
-                        </select>
-                    </label>
-                </td>
-                <td>
-                    <label>
-                        <select name="idRoleAFGW">
-                            {{ $performer := . }}
-                            {{ range $.Roles }}
-                            <option value="{{ .Id }}"
-                                    {{ if eq .Id $performer.IdRoleAFGW }}selected{{ end }}>{{ .Name }}
-                            </option>
-                            {{ end }}
-                        </select>
-                    </label>
-                </td>
-                <td class="{{if .Archive}}status-archive{{else}}status-active{{end}}">
-                    {{if .Archive}}Архивный{{else}}Активный{{end}}
-                </td>
-                <td>{{formatDateTime .AuditRec.CreatedAt}}</td>
-                <td>{{ .AuditRec.CreatedBy}}</td>
-                <td>{{formatDateTime .AuditRec.UpdatedAt}}</td>
-                <td>{{ .AuditRec.UpdatedBy}}</td>
-                <td>
-                    <input type="hidden" name="performerId" value="{{ .Id}}">
-                    <input type="hidden" name="page" value="{{$.CurrentPage}}">
-                    <input class="save-btn" type="submit" value="Сохранить">
-                </td>
-            </form>
-            {{ else }}
-            <td>{{.FIO}}</td>
-            <td>{{.BC}}</td>
-            <td>{{.Pass}}</td>
-            <td>
-                {{ $performer := . }}
-                {{ range $.Roles }}
-                {{ if eq .Id $performer.IdRoleAForms }}
-                {{ .Name }}
-                {{ end }}
-                {{ end }}
-            </td>
-            <td>
-                {{ $performer := . }}
-                {{ range $.Roles }}
-                {{ if eq .Id $performer.IdRoleAFGW }}
-                {{ .Name }}
-                {{ end }}
-                {{ end }}
-            </td>
-            <td class="{{if .Archive}}status-archive{{else}}status-active{{end}}">
-                {{if .Archive}}Архивный{{else}}Активный{{end}}
-            </td>
-            <td>{{formatDateTime .AuditRec.CreatedAt}}</td>
-            <td>{{ .AuditRec.CreatedBy}}</td>
-            <td>{{formatDateTime .AuditRec.UpdatedAt}}</td>
-            <td>{{ .AuditRec.UpdatedBy}}</td>
-            <td>
-                <a href="/admin/performers?performerId={{ .Id }}&page={{$.Page}}">Изменить</a>
-            </td>
-            {{end}}
-        </tr>
-        {{ end }}
-        </tbody>
-    </table>
-
-    <!-- Пагинация -->
-    {{if .TotalPages}}
-    <div class="pagination">
-        {{if gt .Page 1}}
-        <a href="/admin/performers?page=1{{if .PerformerId}}&performerId={{.PerformerId}}{{end}}" class="page-link first">««</a>
-        <a href="/admin/performers?page={{sub .Page 1}}{{if .PerformerId}}&performerId={{.PerformerId}}{{end}}" class="page-link prev">«</a>
-        {{else}}
-        <span class="page-link disabled first">««</span>
-        <span class="page-link disabled prev">«</span>
-        {{end}}
-
-        {{range .Pages}}
-        {{if eq . $.Page}}
-        <span class="page-link active">{{.}}</span>
-        {{else}}
-        <a href="/admin/performers?page={{.}}{{if $.PerformerId}}&performerId={{$.PerformerId}}{{end}}" class="page-link">{{.}}</a>
-        {{end}}
-        {{end}}
-
-        {{if lt .Page .TotalPages}}
-        <a href="/admin/performers?page={{add .Page 1}}{{if .PerformerId}}&performerId={{.PerformerId}}{{end}}" class="page-link next">»</a>
-        <a href="/admin/performers?page={{.TotalPages}}{{if .PerformerId}}&performerId={{.PerformerId}}{{end}}" class="page-link last">»»</a>
-        {{else}}
-        <span class="page-link disabled next">»</span>
-        <span class="page-link disabled last">»»</span>
-        {{end}}
+    {{ else }}
+    <div class="text-center py-5">
+        <div class="mb-3">
+            <span style="font-size: 3rem;">👥</span>
+        </div>
+        <h3 class="text-muted mb-3">Сотрудники не найдены</h3>
     </div>
-    {{end}}
-
-    <p style="margin-top: 20px; color: #666;">
-        Страница {{.CurrentPage}} из {{.TotalPages}}
-    </p>
-    {{else}}
-    <p style="text-align: center; color: #666; font-style: italic;">
-        Нет данных о сотрудниках
-    </p>
-    {{end}}
+    {{ end }}
 </div>
 
-<style>
-    /* Стили для пагинации */
-    .table-info {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 10px;
-        padding: 5px 10px;
-        background-color: #f5f5f5;
-        border-radius: 4px;
-        font-size: 14px;
-        color: #666;
-    }
-
-    .pagination {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 5px;
-        margin: 20px 0;
-        flex-wrap: wrap;
-    }
-
-    .page-link {
-        display: inline-block;
-        padding: 8px 12px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        text-decoration: none;
-        color: #333;
-        background-color: #fff;
-        transition: all 0.3s;
-        min-width: 40px;
-        text-align: center;
-        font-size: 14px;
-    }
-
-    .page-link:hover {
-        background-color: #f0f0f0;
-        border-color: #ccc;
-    }
-
-    .page-link.active {
-        background-color: #007bff;
-        color: white;
-        border-color: #007bff;
-        font-weight: bold;
-    }
-
-    .page-link.disabled {
-        color: #999;
-        background-color: #f9f9f9;
-        cursor: not-allowed;
-    }
-
-    .page-link.first, .page-link.last {
-        font-weight: bold;
-    }
-
-    /* Адаптивность */
-    @media (max-width: 768px) {
-        .pagination {
-            gap: 3px;
-        }
-
-        .page-link {
-            padding: 6px 10px;
-            min-width: 35px;
-            font-size: 13px;
-        }
-    }
-</style>
-{{end}}
+{{ end }}
