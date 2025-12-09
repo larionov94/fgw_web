@@ -1,16 +1,23 @@
 document.addEventListener('DOMContentLoaded', function () {
-    // Хранилище для оригинальных значений из сервера
+    // 1. Хранилище для оригинальных значений
     const originalData = new Map();
 
-    // Обработчик кнопки редактирования
+    // 2. Обработчик кнопки редактирования
     document.addEventListener('click', function (e) {
         if (e.target.closest('.edit-btn')) {
             const btn = e.target.closest('.edit-btn');
             const row = btn.closest('tr');
+
             enableEditMode(row);
         }
 
-        // Обработчик кнопки сохранения
+        if (e.target.closest('.cancel-btn')) {
+            const btn = e.target.closest('.cancel-btn');
+            const row = btn.closest('tr')
+
+            disableEditMode(row);
+        }
+
         if (e.target.closest('.save-btn')) {
             const btn = e.target.closest('.save-btn');
             const row = btn.closest('tr');
@@ -29,99 +36,88 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-        if (e.target.closest('.cancel-btn')) {
-            const btn = e.target.closest('.cancel-btn');
-            const row = btn.closest('tr');
-            disableEditMode(row);
-        }
     });
 
     function enableEditMode(row) {
-        // Получаем ID из data-id атрибута строки
-        const performerIdStr = row.getAttribute('data-id');
+        // 1. Получаем Id из data-id атрибута строки
+        const performerIdStr = row.getAttribute('data-id'); // {{ .Obj }}
         const performerId = parseInt(performerIdStr, 10);
 
-        if (isNaN(performerId)) {
-            console.error('Invalid performer ID:', performerIdStr);
-            return;
-        }
-
-        // Получаем элементы select
+        // 2. Получаем элементы select
         const formSelect = row.querySelector('.role-forms-select');
         const fgwSelect = row.querySelector('.role-fgw-select');
 
-        // Если это первое редактирование, сохраняем оригинальные значения из сервера
+        // 3. Сохраняем оригинальные значения с сервера
         if (!originalData.has(performerId)) {
-            // Берем значения из атрибутов select'ов (они содержат оригинальные значения из сервера)
-            const originalFormsValue = formSelect.getAttribute('data-original') || formSelect.value;
+            // 3.1. Берем значение из атрибутов select (они содержать оригинальные значения)
+            const originalFormValue = formSelect.getAttribute('data-original') || formSelect.value;
             const originalFgwValue = fgwSelect.getAttribute('data-original') || fgwSelect.value;
 
-            // Находим текст для этих значений
-            let originalFormsText = '';
-            let originalFgwText = '';
+            let originalFormText = '';
+            let originalFgwText = ''
 
             for (let option of formSelect.options) {
-                if (option.value === originalFormsValue) {
-                    originalFormsText = option.text.trim();
+                if (option.value === originalFormValue) {
+                    originalFormText = option.text.trim()
                     break;
                 }
             }
 
             for (let option of fgwSelect.options) {
                 if (option.value === originalFgwValue) {
-                    originalFgwText = option.text.trim();
+                    originalFgwText = option.text.trim()
                     break;
                 }
             }
 
             originalData.set(performerId, {
-                formsValue: originalFormsValue,
+                formsValue: originalFormValue,
                 fgwValue: originalFgwValue,
-                formsText: originalFormsText,
+                formText: originalFormText,
                 fgwText: originalFgwText
             });
         }
 
-        // Получаем сохраненные оригинальные значения
+        // 4. Получаем сохраненные оригинальные значения
         const original = originalData.get(performerId);
 
-        // Устанавливаем текущие значения в select'ах
+        // 5. Устанавливаем текущее значение в select
         formSelect.value = original.formsValue;
         fgwSelect.value = original.fgwValue;
 
-        // Сохраняем текущие значения для возможной отмены
+        // 6. Сохраняем текущие значения для возможности отмены
         row.dataset.originalFormsValue = original.formsValue;
         row.dataset.originalFgwValue = original.fgwValue;
         row.dataset.performerId = performerId.toString();
 
-        // Показываем поля редактирования
+        // 7. Показываем поля редактирования
         row.querySelectorAll('.edit-mode').forEach(el => {
             el.style.display = 'table-cell';
         });
 
-        // Скрываем поля просмотра
+        // 8. Скрываем поля просмотра
         row.querySelectorAll('.view-mode').forEach(el => {
             el.style.display = 'none';
         });
 
-        // Показываем кнопки сохранения/отмены
+        // 9. Показываем кнопки сохранения/отмены
         row.querySelector('.edit-btn').style.display = 'none';
         row.querySelector('.edit-buttons').style.display = 'flex';
 
-        // Добавляем визуальные индикаторы
+        // 10. Добавляем визуальные индикаторы
         row.classList.add('editing');
         row.style.backgroundColor = '#f8f9fa';
     }
 
     function disableEditMode(row) {
-        // Получаем сохраненные значения для восстановления
+        // 1. Получаем сохраненные значения для восстановления
         const originalFormsValue = row.dataset.originalFormsValue;
         const originalFgwValue = row.dataset.originalFgwValue;
 
         const formSelect = row.querySelector('.role-forms-select');
         const fgwSelect = row.querySelector('.role-fgw-select');
 
-        // Восстанавливаем значения в select'ах
+        // 2. Восстанавливаем значение в select
         if (originalFormsValue && formSelect) {
             formSelect.value = originalFormsValue;
         }
@@ -130,21 +126,21 @@ document.addEventListener('DOMContentLoaded', function () {
             fgwSelect.value = originalFgwValue;
         }
 
-        // Скрываем поля редактирования
+        // 3. Скрываем поля редактирования
         row.querySelectorAll('.edit-mode').forEach(el => {
             el.style.display = 'none';
         });
 
-        // Показываем поля просмотра
+        // 4. Показываем поля просмотра
         row.querySelectorAll('.view-mode').forEach(el => {
             el.style.display = 'table-cell';
         });
 
-        // Показываем кнопку редактирования
+        // 5. Показываем кнопку редактирования
         row.querySelector('.edit-btn').style.display = 'block';
         row.querySelector('.edit-buttons').style.display = 'none';
 
-        // Убираем визуальные индикаторы
+        // 6. Убираем визуальные индикаторы
         row.classList.remove('editing');
         row.style.backgroundColor = '';
 
@@ -155,40 +151,29 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function saveChanges(row) {
-        // Получаем performerId из строки
-        const performerIdStr = row.getAttribute('data-id');
+        // 1. Получаем Id из data-id атрибута строки
+        const performerIdStr = row.getAttribute('data-id'); // {{ .Obj }}
         const performerId = parseInt(performerIdStr, 10);
 
-        if (isNaN(performerId)) {
-            showNotification('Ошибка: неверный ID сотрудника', 'danger');
-            return;
-        }
-
-        // Получаем элементы select
-        const formsSelect = row.querySelector('.role-forms-select');
+        // 2. Получаем элементы select
+        const formSelect = row.querySelector('.role-forms-select');
         const fgwSelect = row.querySelector('.role-fgw-select');
 
-        // Получаем текстовые значения выбранных опций
-        const selectedFormsText = formsSelect.options[formsSelect.selectedIndex].text;
+        // 3. Получаем текстовые значения выбранных опций
+        const selectedFormsText = formSelect.options[formSelect.selectedIndex].text;
         const selectedFgwText = fgwSelect.options[fgwSelect.selectedIndex].text;
 
-        // Преобразуем значения в числа
-        const idRoleAForms = parseInt(formsSelect.value, 10);
+        // 4. Преобразуем значения в числа
+        const idRoleAForms = parseInt(formSelect.value, 10);
         const idRoleAFGW = parseInt(fgwSelect.value, 10);
 
-        // Валидация
-        if (isNaN(idRoleAForms) || isNaN(idRoleAFGW)) {
-            showNotification('Ошибка: неверные значения ролей', 'danger');
-            throw new Error('Invalid role values');
-        }
-
-        // Показываем индикатор загрузки
+        // 5. Показываем индикатор загрузки
         const saveBtn = row.querySelector('.save-btn');
         saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
         saveBtn.disabled = true;
 
         try {
-            // Отправляем запрос через Fetch API
+            // 6. Отправляем запрос через Fetch API
             const response = await fetch('/admin/performers/upd', {
                 method: 'POST',
                 headers: {
@@ -201,23 +186,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
             });
 
-            // Проверяем статус ответа
+            // 7. Проверяем статус ответа
             if (!response.ok) {
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.includes('application/json')) {
                     const result = await response.json();
-                    throw new Error(result.error || `HTTP ${response.status}`);
+                    new Error(result.error || `HTTP ${response.status}`);
                 } else {
-                    throw new Error(`HTTP ${response.status}`);
+                    new Error(`HTTP ${response.status}`);
                 }
             }
 
-            // Парсим JSON ответ
+            // 9. Парсим JSON ответ
             const result = await response.json();
 
-            // Успешное обновление
+            // 10. Успешное обновление
             handleSuccessUpdate(row, result, selectedFormsText, selectedFgwText, performerId, idRoleAForms, idRoleAFGW);
-
         } catch (error) {
             console.error('Save error:', error);
 
@@ -230,10 +214,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             throw error; // Пробрасываем ошибку дальше
         }
+
     }
 
     function handleSuccessUpdate(row, result, selectedFormsText, selectedFgwText, performerId, idRoleAForms, idRoleAFGW) {
-        // ОБНОВЛЯЕМ хранилище оригинальных данных
+        // 1. Обновление оригинальных данных
         originalData.set(performerId, {
             formsValue: idRoleAForms.toString(),
             fgwValue: idRoleAFGW.toString(),
@@ -241,17 +226,19 @@ document.addEventListener('DOMContentLoaded', function () {
             fgwText: selectedFgwText
         });
 
-        // Обновляем отображение ролей
+        // 2. Обновляем отображение ролей
         row.querySelector('.forms-role .badge').textContent = selectedFormsText;
         row.querySelector('.fgw-role .badge').textContent = selectedFgwText;
 
-        // Обновляем значения в select'ах
+        // 3. Обновляем значения в select'ах
         const formSelect = row.querySelector('.role-forms-select');
         const fgwSelect = row.querySelector('.role-fgw-select');
+        const updateAt = row.querySelector('.update-at');
+        const updateBy = row.querySelector('.update-by');
 
         if (formSelect) {
             formSelect.value = idRoleAForms.toString();
-            // Обновляем атрибут data-original
+            // 3.1. Обновляем атрибут data-original
             formSelect.setAttribute('data-original', idRoleAForms.toString());
         }
 
@@ -259,56 +246,20 @@ document.addEventListener('DOMContentLoaded', function () {
             fgwSelect.value = idRoleAFGW.toString();
             fgwSelect.setAttribute('data-original', idRoleAFGW.toString());
         }
-        
 
-        // Выходим из режима редактирования
-        disableEditMode(row);
+        updateAt.textContent = result.updatedAt;
+        updateBy.textContent = result.updatedBy;
 
-        // Показываем уведомление
+        // 4. Выходим из режима редактирования
+        disableEditMode(row)
+
+        // 5. Показываем уведомление
         showNotification(result.message || 'Изменения успешно сохранены', 'success');
 
-        // Восстанавливаем кнопку сохранения
+        // 6. Восстанавливаем кнопку сохранения
         const saveBtn = row.querySelector('.save-btn');
         saveBtn.innerHTML = '<span>✓</span>';
         saveBtn.disabled = false;
-    }
-
-    // Остальные функции остаются без изменений...
-    function handleErrorResponse(status, errorMessage) {
-        console.error('Server error:', status, errorMessage);
-
-        switch (status) {
-            case 400:
-                showNotification('Неверные данные: ' + errorMessage, 'danger');
-                break;
-            case 401:
-                showNotification('Сессия истекла. Перенаправление...', 'warning');
-                setTimeout(() => {
-                    window.location.href = '/login';
-                }, 2000);
-                break;
-            case 403:
-                showNotification('У вас нет прав для этого действия', 'danger');
-                break;
-            case 404:
-                showNotification('Сотрудник не найден', 'danger');
-                break;
-            case 500:
-                showNotification('Ошибка сервера: ' + errorMessage, 'danger');
-                break;
-            default:
-                showNotification('Ошибка: ' + errorMessage, 'danger');
-        }
-    }
-
-    function formatDate(dateString) {
-        try {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('ru-RU') + ' ' +
-                date.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'});
-        } catch (e) {
-            return dateString; // Возвращаем как есть если не удалось распарсить
-        }
     }
 
     function showNotification(message, type) {
