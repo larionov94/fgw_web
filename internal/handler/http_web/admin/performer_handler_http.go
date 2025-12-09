@@ -1,17 +1,20 @@
 package admin
 
 import (
+	"FGW_WEB/internal/config"
 	"FGW_WEB/internal/handler"
 	"FGW_WEB/internal/handler/http_err"
+	"FGW_WEB/internal/handler/json_api"
+	"FGW_WEB/internal/handler/json_err"
 	"FGW_WEB/internal/model"
 	"FGW_WEB/internal/service"
 	"FGW_WEB/pkg/common"
 	"FGW_WEB/pkg/common/msg"
 	"FGW_WEB/pkg/convert"
+	"encoding/json"
 	"html/template"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -40,7 +43,7 @@ func NewPerformerHandlerHTML(performerService service.PerformerUseCase, roleServ
 
 func (p *PerformerHandlerHTML) ServeHTTPHTMLRouter(mux *http.ServeMux) {
 	mux.HandleFunc("/admin/performers", p.authMiddleware.RequireAuth(p.authMiddleware.RequireRole([]int{3}, p.AllPerformersHTML)))
-	mux.HandleFunc("/admin/performers/upd", p.authMiddleware.RequireAuth(p.authMiddleware.RequireRole([]int{3}, p.UpdPerformerHTML)))
+	mux.HandleFunc("/admin/performers/upd", p.authMiddleware.RequireAuth(p.authMiddleware.RequireRole([]int{3}, p.handleJSONUpdate)))
 }
 
 func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.Request) {
@@ -103,79 +106,145 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 	p.renderPages(w, "admin.html", data, r, tmplAdminPerformersHTML)
 }
 
-func (p *PerformerHandlerHTML) UpdPerformerHTML(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodPost:
-		p.processUpdFormPerformer(w, r)
-	default:
-		http_err.SendErrorHTTP(w, http.StatusMethodNotAllowed, "", p.logg, r)
-	}
-}
+//func (p *PerformerHandlerHTML) UpdPerformerHTML(w http.ResponseWriter, r *http.Request) {
+//	switch r.Method {
+//	case http.MethodPost:
+//		p.processUpdFormPerformer(w, r)
+//	default:
+//		http_err.SendErrorHTTP(w, http.StatusMethodNotAllowed, "", p.logg, r)
+//	}
+//}
 
-func (p *PerformerHandlerHTML) processUpdFormPerformer(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+func (p *PerformerHandlerHTML) UpdatePerformer(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-	// Определяем, это iframe запрос или обычный
-	referer := r.Header.Get("Referer")
-	isIframeRequest := strings.Contains(referer, "performers") && r.Method == "POST"
-
-	if err := r.ParseForm(); err != nil {
-		p.renderErrorPage(w, http.StatusBadRequest, msg.H7007, r)
+	if r.Method != http.MethodPut {
+		json_err.SendErrorResponse(w, http.StatusMethodNotAllowed, msg.H7000, "", r)
 
 		return
 	}
 
-	performerIdStr := r.FormValue("performerId")
-	idRoleAFormsStr := r.FormValue("idRoleAForms")
-	idRoleAFGWStr := r.FormValue("idRoleAFGW")
-
-	if idRoleAFormsStr == "" || idRoleAFGWStr == "" {
-		p.renderErrorPage(w, http.StatusUnauthorized, msg.E3214, r)
-
-		return
-	}
-
+	performerIdStr := r.URL.Query().Get("performerId")
 	performerId := convert.ConvStrToInt(performerIdStr)
-	idRoleAForms := convert.ConvStrToInt(idRoleAFormsStr)
-	idRoleAFGW := convert.ConvStrToInt(idRoleAFGWStr)
+
+	var performer model.Performer
+	if err := json.NewDecoder(r.Body).Decode(&performer); err != nil {
+		json_err.SendErrorResponse(w, http.StatusBadRequest, msg.H7004, err.Error(), r)
+
+		return
+	}
 
 	exists, err := p.performerService.ExistPerformer(r.Context(), performerId)
 	if err != nil {
-		http_err.SendErrorHTTP(w, http.StatusInternalServerError, err.Error(), p.logg, r)
+		json_err.SendErrorResponse(w, http.StatusInternalServerError, msg.H7001, err.Error(), r)
 
 		return
 	}
 
 	if !exists {
-		p.renderErrorPage(w, http.StatusUnauthorized, msg.E3212, r)
+		json_err.SendErrorResponse(w, http.StatusNotFound, msg.H7008, "", r)
 
 		return
 	}
 
+	if err = p.performerService.UpdPerformer(r.Context(), performerId, &performer); err != nil {
+		json_err.SendErrorResponse(w, http.StatusInternalServerError, msg.H7001, err.Error(), r)
+
+		return
+	}
+
+	response := model.PerformerUpdate{
+		Success: true,
+		Message: "Сотрудник успешно обновлен",
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json_api.WriteJSON(w, response, r)
+}
+
+// Обработчик для JSON запросов от Fetch API
+func (p *PerformerHandlerHTML) handleJSONUpdate(w http.ResponseWriter, r *http.Request) {
+	// Устанавливаем правильный Content-Type для JSON ответа
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	// Декодируем JSON запрос
+	var req struct {
+		PerformerId  int `json:"performerId"`
+		IdRoleAForms int `json:"idRoleAForms"`
+		IdRoleAFGW   int `json:"idRoleAFGW"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		p.logg.LogE("Ошибка декодирования JSON:", err)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "Неверный формат JSON: " + err.Error(),
+		})
+		return
+	}
+
+	// Проверяем существование сотрудника
+	exists, err := p.performerService.ExistPerformer(r.Context(), req.PerformerId)
+	if err != nil {
+		p.logg.LogE("Ошибка проверки сотрудника:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "Ошибка проверки сотрудника: " + err.Error(),
+		})
+		return
+	}
+
+	if !exists {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "Сотрудник не найден",
+		})
+		return
+	}
+
+	// Получаем ID текущего пользователя из сессии
+	authPerformerId := 0
+	if session, err := config.Store.Get(r, config.GetSessionName()); err == nil {
+		if id, ok := session.Values[config.SessionPerformerKey].(int); ok {
+			authPerformerId = id
+		}
+	}
+
+	// Подготавливаем данные для обновления
 	performer := model.Performer{
-		Id:           performerId,
-		IdRoleAForms: idRoleAForms,
-		IdRoleAFGW:   idRoleAFGW,
+		Id:           req.PerformerId,
+		IdRoleAForms: req.IdRoleAForms,
+		IdRoleAFGW:   req.IdRoleAFGW,
 		AuditRec: model.Audit{
-			UpdatedAt: time.Now().String(),
+			UpdatedAt: time.Now().Format("2006-01-02 15:04:05"),
 			UpdatedBy: authPerformerId,
 		},
 	}
 
-	if err = p.performerService.UpdPerformer(r.Context(), performerId, &performer); err != nil {
-		http_err.SendErrorHTTP(w, http.StatusInternalServerError, err.Error(), p.logg, r)
-
+	// Выполняем обновление
+	if err = p.performerService.UpdPerformer(r.Context(), req.PerformerId, &performer); err != nil {
+		p.logg.LogE("Ошибка обновления сотрудника:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "Ошибка обновления: " + err.Error(),
+		})
 		return
 	}
 
-	// Для iframe запроса возвращаем пустую страницу или скрипт
-	if isIframeRequest {
-		w.Write([]byte("<script>window.parent.postMessage('saved', '*')</script>"))
-	} else {
-		// Старый редирект для обычных запросов (на случай прямого обращения)
-		http.Redirect(w, r, urlAdminPerformers, http.StatusSeeOther)
+	// Успешный ответ
+	response := map[string]interface{}{
+		"success":     true,
+		"message":     "Роли успешно обновлены",
+		"performerId": req.PerformerId,
+		"updatedAt":   time.Now().Format("02.01.2006 15:04:05"),
+		"updatedBy":   authPerformerId,
 	}
-	//http.Redirect(w, r, urlAdminPerformers, http.StatusSeeOther)
+
+	// Отправляем успешный ответ
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		p.logg.LogE("Ошибка кодирования JSON ответа:", err)
+	}
 }
 
 func (p *PerformerHandlerHTML) markEditingPerformer(id string, performers []*model.Performer) {

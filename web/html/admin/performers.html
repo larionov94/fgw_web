@@ -77,7 +77,7 @@
                         <!-- Роль Forms - редактируемая версия (скрыта по умолчанию) -->
                         <td class="edit-mode" style="display: none;">
                             <label>
-                                <select class="form-select form-select-sm role-forms-select" name="idRoleAForms">
+                                <select class="form-select form-select-sm role-forms-select" name="idRoleAForms" data-original="{{ .IdRoleAForms }}" >
                                     {{ $performer := . }}
                                     {{ range $.Roles }}
                                     <option value="{{ .Id }}" {{ if eq .Id $performer.IdRoleAForms }}selected{{ end }}>
@@ -91,7 +91,7 @@
                         <!-- Роль FGW - редактируемая версия (скрыта по умолчанию) -->
                         <td class="edit-mode" style="display: none;">
                             <label>
-                                <select class="form-select form-select-sm role-fgw-select" name="idRoleAFGW">
+                                <select class="form-select form-select-sm role-fgw-select" name="idRoleAFGW"  data-original="{{ .IdRoleAFGW }}">
                                     {{ $performer := . }}
                                     {{ range $.Roles }}
                                     <option value="{{ .Id }}" {{ if eq .Id $performer.IdRoleAFGW }}selected{{ end }}>
@@ -111,8 +111,8 @@
                         </td>
                         <td>{{ formatDateTime .AuditRec.CreatedAt }}</td>
                         <td>{{ .AuditRec.CreatedBy }}</td>
-                        <td>{{ formatDateTime .AuditRec.UpdatedAt }}</td>
-                        <td>{{ .AuditRec.UpdatedBy }}</td>
+                        <td class="updated-at-cell" >{{ formatDateTime .AuditRec.UpdatedAt }}</td>
+                        <td class="updated-at-cell1">{{ .AuditRec.UpdatedBy }}</td>
 
                         <!-- Кнопки операций -->
                         <td>
