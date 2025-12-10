@@ -23,14 +23,18 @@ import (
 const (
 	tmplAdminPerformersHTML = "performers.html"
 	tmplErrorHTML           = "error.html"
+	tmplAdminHTML           = "admin.html"
 	prefixTmplAdmin         = "web/html/admin/"
 	//urlAdminPerformers      = "/admin/performers"
 
 	prefixDefaultTmpl = "web/html/"
 	prefixAdminTmpl   = "web/html/admin/"
+
+	pageSize = 15
 )
 
 var authPerformerId int
+var page = 1
 
 type PerformerHandlerHTML struct {
 	performerService service.PerformerUseCase
@@ -48,6 +52,10 @@ func (p *PerformerHandlerHTML) ServeHTTPHTMLRouter(mux *http.ServeMux) {
 	mux.HandleFunc("/admin/performers/upd", p.authMiddleware.RequireAuth(p.authMiddleware.RequireRole([]int{3}, p.HandleJSONUpdate)))
 }
 
+func (p *PerformerHandlerHTML) Pagination() {
+
+}
+
 func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
@@ -58,15 +66,11 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 
 	// Получаем параметры пагинации
 	pageStr := r.URL.Query().Get("page")
-	page := 1
 	if pageStr != "" {
 		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
 			page = p
 		}
 	}
-
-	// Размер страницы (можно вынести в конфиг)
-	pageSize := 15
 
 	// Получаем общее количество
 	totalCount, err := p.performerService.GetPerformersCount(r.Context())
@@ -106,10 +110,6 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 		log.Println(err.Error())
 	}
 
-	if performerIdStr := r.URL.Query().Get("performerId"); performerIdStr != "" {
-		p.markEditingPerformer(performerIdStr, performers)
-	}
-
 	// Рассчитываем пагинацию
 	totalPages := int(math.Ceil(float64(totalCount) / float64(pageSize)))
 	if totalPages == 0 {
@@ -139,16 +139,7 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 		PerformerFIO  string
 		PerformerId   int
 		PerformerRole string
-
-		// Пагинация
-		Page           int
-		PageSize       int
-		TotalCount     int
-		TotalPages     int
-		Pages          []int
-		StartItem      int
-		EndItem        int
-		PerformerIdStr int // Для сохранения в пагинации
+		Pagination    model.Pagination
 	}{
 		Title:         "Список сотрудников",
 		CurrentPage:   "performers",
@@ -157,32 +148,32 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 		PerformerFIO:  performer.FIO,
 		PerformerId:   performerId,
 		PerformerRole: role.Name,
-
-		// Пагинация
-		Page:           page,
-		PageSize:       pageSize,
-		TotalCount:     totalCount,
-		TotalPages:     totalPages,
-		Pages:          pages,
-		StartItem:      startItem,
-		EndItem:        endItem,
-		PerformerIdStr: performerId,
+		Pagination: model.Pagination{
+			Page:           page,
+			PageSize:       pageSize,
+			TotalCount:     totalCount,
+			TotalPages:     totalPages,
+			Pages:          pages,
+			StartItem:      startItem,
+			EndItem:        endItem,
+			PerformerIdStr: performerId,
+		},
 	}
 
-	p.renderPages(w, "admin.html", data, r, tmplAdminPerformersHTML)
+	p.renderPages(w, tmplAdminHTML, data, r, tmplAdminPerformersHTML)
 }
 
-// Вспомогательная функция для генерации диапазона страниц
+// generatePageRange функция для генерации диапазона страниц.
 func generatePageRange(current, total, maxPages int) []int {
 	var pages []int
 
 	if total <= maxPages {
-		// Если страниц меньше или равно maxPages, показываем все
+		// 1. Если страниц меньше или равно maxPages, показываем все.
 		for i := 1; i <= total; i++ {
 			pages = append(pages, i)
 		}
 	} else {
-		// Определяем начальную и конечную страницу
+		// 2. Определяем начальную и конечную страницу.
 		start := current - maxPages/2
 		end := current + maxPages/2
 
@@ -265,15 +256,6 @@ func (p *PerformerHandlerHTML) HandleJSONUpdate(w http.ResponseWriter, r *http.R
 
 	w.WriteHeader(http.StatusOK)
 	json_api.WriteJSON(w, response, r)
-}
-
-func (p *PerformerHandlerHTML) markEditingPerformer(id string, performers []*model.Performer) {
-	performerId := convert.ConvStrToInt(id)
-	for _, performer := range performers {
-		if performer.Id == performerId {
-			performer.IsEditing = true
-		}
-	}
 }
 
 func (p *PerformerHandlerHTML) renderErrorPage(w http.ResponseWriter, statusCode int, msgCode string, r *http.Request) {

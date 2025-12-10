@@ -6,11 +6,11 @@
         <h1 class="h3 mb-0">{{ .Title }}</h1>
     </div>
 
-    {{if .Performers}}
+    {{ if .Performers }}
 
     <div class="table-info">
-        <span>Всего сотрудников: {{.TotalCount}}</span>
-        <span>Показано: {{.StartItem}} - {{.EndItem}} из {{.TotalCount}}</span>
+        <span>Всего сотрудников: {{ .Pagination.TotalCount }}</span>
+        <span>Показано: {{ .Pagination.StartItem }} - {{ .Pagination.EndItem }} из {{ .Pagination.TotalCount }}</span>
     </div>
 
     <div class="card shadow-sm">
@@ -152,90 +152,90 @@
 
 
     <!-- Пагинация -->
-    {{if .TotalPages}}
+    {{ if .Pagination.TotalPages }}
     <nav aria-label="Навигация по страницам" class="mt-4">
         <ul class="pagination justify-content-center mb-0">
             <!-- Кнопка первой страницы (<<) -->
-            {{if gt .Page 1}}
+            {{ if gt .Pagination.Page 1 }}
             <li class="page-item">
-                <a href="/admin/performers?page=1{{if .PerformerId}}&performerId={{.PerformerId}}{{end}}"
+                <a href="/admin/performers?page=1{{ if .PerformerId }}&performerId={{ .PerformerId }}{{ end }}"
                    class="page-link"
                    aria-label="Первая страница">
                     <span aria-hidden="true">&laquo;&laquo;</span>
                 </a>
             </li>
-            {{else}}
+            {{ else }}
             <li class="page-item disabled">
                 <span class="page-link" aria-hidden="true">&laquo;&laquo;</span>
             </li>
-            {{end}}
+            {{ end }}
 
             <!-- Кнопка предыдущей страницы (<) -->
-            {{if gt .Page 1}}
+            {{ if gt .Pagination.Page 1 }}
             <li class="page-item">
-                <a href="/admin/performers?page={{sub .Page 1}}{{if .PerformerId}}&performerId={{.PerformerId}}{{end}}"
+                <a href="/admin/performers?page={{ sub .Pagination.Page 1 }}{{ if .PerformerId }}&performerId={{ .PerformerId }}{{ end }}"
                    class="page-link"
                    aria-label="Предыдущая страница">
                     <span aria-hidden="true">&laquo;</span>
                 </a>
             </li>
-            {{else}}
+            {{ else }}
             <li class="page-item disabled">
                 <span class="page-link" aria-hidden="true">&laquo;</span>
             </li>
-            {{end}}
+            {{ end }}
 
             <!-- Номера страниц -->
-            {{range .Pages}}
-            {{if eq . $.Page}}
+            {{ range .Pagination.Pages }}
+            {{ if eq . $.Pagination.Page }}
             <li class="page-item active" aria-current="page">
-                <span class="page-link">{{.}}</span>
+                <span class="page-link">{{ . }}</span>
             </li>
-            {{else}}
+            {{ else }}
             <li class="page-item">
-                <a href="/admin/performers?page={{.}}{{if $.PerformerId}}&performerId={{$.PerformerId}}{{end}}"
-                   class="page-link">{{.}}</a>
+                <a href="/admin/performers?page={{ . }}{{ if $.PerformerId }}&performerId={{ $.PerformerId }}{{ end }}"
+                   class="page-link">{{ . }}</a>
             </li>
-            {{end}}
-            {{end}}
+            {{ end }}
+            {{ end }}
 
             <!-- Кнопка следующей страницы (>) -->
-            {{if lt .Page .TotalPages}}
+            {{ if lt .Pagination.Page .Pagination.TotalPages }}
             <li class="page-item">
-                <a href="/admin/performers?page={{add .Page 1}}{{if .PerformerId}}&performerId={{.PerformerId}}{{end}}"
+                <a href="/admin/performers?page={{ add .Pagination.Page 1 }}{{ if .PerformerId }}&performerId={{ .PerformerId }}{{ end }}"
                    class="page-link"
                    aria-label="Следующая страница">
                     <span aria-hidden="true">&raquo;</span>
                 </a>
             </li>
-            {{else}}
+            {{ else }}
             <li class="page-item disabled">
                 <span class="page-link" aria-hidden="true">&raquo;</span>
             </li>
-            {{end}}
+            {{ end }}
 
             <!-- Кнопка последней страницы (>>) -->
-            {{if lt .Page .TotalPages}}
+            {{if lt .Pagination.Page .Pagination.TotalPages}}
             <li class="page-item">
-                <a href="/admin/performers?page={{.TotalPages}}{{if .PerformerId}}&performerId={{.PerformerId}}{{end}}"
+                <a href="/admin/performers?page={{ .Pagination.TotalPages }}{{ if .PerformerId }}&performerId={{ .PerformerId }}{{ end }}"
                    class="page-link"
                    aria-label="Последняя страница">
                     <span aria-hidden="true">&raquo;&raquo;</span>
                 </a>
             </li>
-            {{else}}
+            {{ else }}
             <li class="page-item disabled">
                 <span class="page-link" aria-hidden="true">&raquo;&raquo;</span>
             </li>
-            {{end}}
+            {{ end }}
         </ul>
 
         <!-- Информация о текущей странице -->
         <div class="text-center text-muted small mt-2">
-            Страница {{.Page}} из {{.TotalPages}}
+            Страница {{ .Pagination.Page }} из {{ .Pagination.TotalPages }}
         </div>
     </nav>
-    {{end}}
+    {{ end }}
 
 
     {{ else }}
