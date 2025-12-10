@@ -4,6 +4,7 @@ import (
 	"FGW_WEB/internal/config"
 	"FGW_WEB/internal/handler"
 	"FGW_WEB/internal/handler/http_err"
+	"FGW_WEB/internal/handler/http_web"
 	"FGW_WEB/internal/handler/json_api"
 	"FGW_WEB/internal/handler/json_err"
 	"FGW_WEB/internal/model"
@@ -12,11 +13,9 @@ import (
 	"FGW_WEB/pkg/common/msg"
 	"FGW_WEB/pkg/convert"
 	"encoding/json"
+	"fmt"
 	"html/template"
-	"log"
-	"math"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -30,11 +29,12 @@ const (
 	prefixDefaultTmpl = "web/html/"
 	prefixAdminTmpl   = "web/html/admin/"
 
-	pageSize = 15
+	pageSize          = 15
+	maxPage           = 5
+	numberPageDefault = 1
 )
 
 var authPerformerId int
-var page = 1
 
 type PerformerHandlerHTML struct {
 	performerService service.PerformerUseCase
@@ -52,83 +52,81 @@ func (p *PerformerHandlerHTML) ServeHTTPHTMLRouter(mux *http.ServeMux) {
 	mux.HandleFunc("/admin/performers/upd", p.authMiddleware.RequireAuth(p.authMiddleware.RequireRole([]int{3}, p.HandleJSONUpdate)))
 }
 
-func (p *PerformerHandlerHTML) Pagination() {
-
-}
-
 func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	if r.Method != http.MethodGet {
 		http_err.SendErrorHTTP(w, http.StatusMethodNotAllowed, "", p.logg, r)
+
 		return
 	}
 
-	// Получаем параметры пагинации
-	pageStr := r.URL.Query().Get("page")
-	if pageStr != "" {
-		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
-			page = p
-		}
+	performerId, performerRoleId, err := p.getSessionPerformerData(w, r)
+	if err != nil {
+		http_err.SendErrorHTTP(w, http.StatusUnauthorized, err.Error(), p.logg, r)
+
+		return
 	}
 
-	// Получаем общее количество
+	pageStr := r.URL.Query().Get("page")
+	page, err := http_web.GetParametersPagination(pageStr, numberPageDefault)
+	if err != nil {
+		http_err.SendErrorHTTP(w, http.StatusNotFound, "", p.logg, r)
+
+		return
+	}
+
 	totalCount, err := p.performerService.GetPerformersCount(r.Context())
 	if err != nil {
-		http_err.SendErrorHTTP(w, http.StatusInternalServerError, err.Error(), p.logg, r)
+		http_err.SendErrorHTTP(w, http.StatusNotFound, err.Error(), p.logg, r)
+
 		return
 	}
 
-	// Рассчитываем смещение
 	offset := (page - 1) * pageSize
-
-	// Получаем исполнителей с пагинацией
 	performers, err := p.performerService.GetPerformersWithPagination(r.Context(), offset, pageSize)
 	if err != nil {
-		http_err.SendErrorHTTP(w, http.StatusInternalServerError, err.Error(), p.logg, r)
+		http_err.SendErrorHTTP(w, http.StatusNotFound, err.Error(), p.logg, r)
+
 		return
 	}
 
 	roles, err := p.roleService.GetAllRole(r.Context())
 	if err != nil {
-		http_err.SendErrorHTTP(w, http.StatusInternalServerError, err.Error(), p.logg, r)
+		http_err.SendErrorHTTP(w, http.StatusNotFound, err.Error(), p.logg, r)
+
 		return
 	}
 
-	performerId, _ := p.authMiddleware.GetPerformerId(r)
-	authPerformerId = performerId
-
-	performerRole, _ := p.authMiddleware.GetRoleId(r)
-
 	performer, err := p.performerService.FindByIdPerformer(r.Context(), performerId)
 	if err != nil {
-		log.Println(err.Error())
+		http_err.SendErrorHTTP(w, http.StatusNotFound, err.Error(), p.logg, r)
+
+		return
 	}
 
-	role, err := p.roleService.FindRoleById(r.Context(), performerRole)
+	role, err := p.roleService.FindRoleById(r.Context(), performerRoleId)
 	if err != nil {
-		log.Println(err.Error())
+		http_err.SendErrorHTTP(w, http.StatusNotFound, err.Error(), p.logg, r)
+
+		return
 	}
 
-	// Рассчитываем пагинацию
-	totalPages := int(math.Ceil(float64(totalCount) / float64(pageSize)))
-	if totalPages == 0 {
-		totalPages = 1
+	totalPages, err := http_web.CalculatePage(totalCount, pageSize, page)
+	if err != nil {
+		http_err.SendErrorHTTP(w, http.StatusNotFound, err.Error(), p.logg, r)
+
+		return
 	}
 
-	// Ограничиваем номер страницы
-	if page > totalPages {
-		page = totalPages
-	}
+	pages := http_web.GeneratePageRange(page, totalPages, maxPage)
 
-	// Генерируем диапазон страниц для отображения
-	pages := generatePageRange(page, totalPages, 5)
+	countPerformers := len(performers)
+	startItem, endItem, err := http_web.CalculateRangeOfElements(offset, totalCount, countPerformers)
+	if err != nil {
+		http_err.SendErrorHTTP(w, http.StatusNotFound, err.Error(), p.logg, r)
 
-	// Рассчитываем отображаемый диапазон элементов
-	startItem := offset + 1
-	endItem := offset + len(performers)
-	if endItem > totalCount {
-		endItem = totalCount
+		return
 	}
 
 	data := struct {
@@ -163,43 +161,10 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 	p.renderPages(w, tmplAdminHTML, data, r, tmplAdminPerformersHTML)
 }
 
-// generatePageRange функция для генерации диапазона страниц.
-func generatePageRange(current, total, maxPages int) []int {
-	var pages []int
-
-	if total <= maxPages {
-		// 1. Если страниц меньше или равно maxPages, показываем все.
-		for i := 1; i <= total; i++ {
-			pages = append(pages, i)
-		}
-	} else {
-		// 2. Определяем начальную и конечную страницу.
-		start := current - maxPages/2
-		end := current + maxPages/2
-
-		if start < 1 {
-			start = 1
-			end = maxPages
-		}
-
-		if end > total {
-			end = total
-			start = total - maxPages + 1
-		}
-
-		for i := start; i <= end; i++ {
-			pages = append(pages, i)
-		}
-	}
-
-	return pages
-}
-
 // HandleJSONUpdate обработчик для JSON запросов от Fetch API.
 func (p *PerformerHandlerHTML) HandleJSONUpdate(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-	// Декодируем JSON запрос
 	var req struct {
 		PerformerId  int `json:"performerId"`
 		IdRoleAForms int `json:"idRoleAForms"`
@@ -325,4 +290,24 @@ func (p *PerformerHandlerHTML) renderPages(
 
 		return
 	}
+}
+
+// getSessionPerformerData получить данные о сеансе сотрудника.
+func (p *PerformerHandlerHTML) getSessionPerformerData(w http.ResponseWriter, r *http.Request) (int, int, error) {
+	performerId, ok := p.authMiddleware.GetPerformerId(r)
+	if !ok {
+		http_err.SendErrorHTTP(w, http.StatusUnauthorized, msg.H7005, p.logg, r)
+
+		return 0, 0, fmt.Errorf("%s", msg.H7005)
+	}
+	authPerformerId = performerId
+
+	performerRole, ok := p.authMiddleware.GetRoleId(r)
+	if !ok {
+		http_err.SendErrorHTTP(w, http.StatusUnauthorized, msg.H7005, p.logg, r)
+
+		return 0, 0, fmt.Errorf("%s", msg.H7005)
+	}
+
+	return performerId, performerRole, nil
 }

@@ -101,10 +101,12 @@ func (p *PerformerService) ExistPerformer(ctx context.Context, id int) (bool, er
 	return p.performerRepo.ExistById(ctx, id)
 }
 
+// GetPerformersCount получить общее кол-во.
 func (p *PerformerService) GetPerformersCount(ctx context.Context) (int, error) {
 	return p.performerRepo.GetPerformersCount(ctx)
 }
 
+// GetPerformersWithPagination получить исполнителей с нумерацией страниц.
 func (p *PerformerService) GetPerformersWithPagination(ctx context.Context, offset, limit int) ([]*model.Performer, error) {
 	return p.performerRepo.GetPerformersWithPagination(ctx, offset, limit)
 }

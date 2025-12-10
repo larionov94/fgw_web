@@ -16,6 +16,7 @@ const (
 	pathToDefault        = "/"
 	prefixTmplPerformers = "web/html/"
 	tmplForceLogoutHTML  = "force_logout.html"
+	maxLifeSession       = 4 * time.Hour
 )
 
 type AuthMiddleware struct {
@@ -153,8 +154,7 @@ func (m *AuthMiddleware) isSessionExpired(session *sessions.Session) bool {
 	if createdAt, ok := session.Values["created_at"].(int64); ok {
 		createTime := time.Unix(createdAt, 0)
 
-		// Максимальное время жизни сессии - 4 часа.
-		maxAge := 4 * time.Hour
+		maxAge := maxLifeSession
 		if customMaxAge, ok := session.Values["max_age"].(int); ok {
 			maxAge = time.Duration(customMaxAge) * time.Second
 		}

@@ -215,7 +215,7 @@
             {{ end }}
 
             <!-- Кнопка последней страницы (>>) -->
-            {{if lt .Pagination.Page .Pagination.TotalPages}}
+            {{ if lt .Pagination.Page .Pagination.TotalPages }}
             <li class="page-item">
                 <a href="/admin/performers?page={{ .Pagination.TotalPages }}{{ if .PerformerId }}&performerId={{ .PerformerId }}{{ end }}"
                    class="page-link"
