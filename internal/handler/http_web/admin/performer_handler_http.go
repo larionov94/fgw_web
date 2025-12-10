@@ -14,7 +14,9 @@ import (
 	"encoding/json"
 	"html/template"
 	"log"
+	"math"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -54,7 +56,30 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 		return
 	}
 
-	performers, err := p.performerService.GetAllPerformers(r.Context())
+	// Получаем параметры пагинации
+	pageStr := r.URL.Query().Get("page")
+	page := 1
+	if pageStr != "" {
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			page = p
+		}
+	}
+
+	// Размер страницы (можно вынести в конфиг)
+	pageSize := 15
+
+	// Получаем общее количество
+	totalCount, err := p.performerService.GetPerformersCount(r.Context())
+	if err != nil {
+		http_err.SendErrorHTTP(w, http.StatusInternalServerError, err.Error(), p.logg, r)
+		return
+	}
+
+	// Рассчитываем смещение
+	offset := (page - 1) * pageSize
+
+	// Получаем исполнителей с пагинацией
+	performers, err := p.performerService.GetPerformersWithPagination(r.Context(), offset, pageSize)
 	if err != nil {
 		http_err.SendErrorHTTP(w, http.StatusInternalServerError, err.Error(), p.logg, r)
 		return
@@ -85,6 +110,27 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 		p.markEditingPerformer(performerIdStr, performers)
 	}
 
+	// Рассчитываем пагинацию
+	totalPages := int(math.Ceil(float64(totalCount) / float64(pageSize)))
+	if totalPages == 0 {
+		totalPages = 1
+	}
+
+	// Ограничиваем номер страницы
+	if page > totalPages {
+		page = totalPages
+	}
+
+	// Генерируем диапазон страниц для отображения
+	pages := generatePageRange(page, totalPages, 5)
+
+	// Рассчитываем отображаемый диапазон элементов
+	startItem := offset + 1
+	endItem := offset + len(performers)
+	if endItem > totalCount {
+		endItem = totalCount
+	}
+
 	data := struct {
 		Title         string
 		CurrentPage   string
@@ -93,6 +139,16 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 		PerformerFIO  string
 		PerformerId   int
 		PerformerRole string
+
+		// Пагинация
+		Page           int
+		PageSize       int
+		TotalCount     int
+		TotalPages     int
+		Pages          []int
+		StartItem      int
+		EndItem        int
+		PerformerIdStr int // Для сохранения в пагинации
 	}{
 		Title:         "Список сотрудников",
 		CurrentPage:   "performers",
@@ -101,9 +157,51 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 		PerformerFIO:  performer.FIO,
 		PerformerId:   performerId,
 		PerformerRole: role.Name,
+
+		// Пагинация
+		Page:           page,
+		PageSize:       pageSize,
+		TotalCount:     totalCount,
+		TotalPages:     totalPages,
+		Pages:          pages,
+		StartItem:      startItem,
+		EndItem:        endItem,
+		PerformerIdStr: performerId,
 	}
 
 	p.renderPages(w, "admin.html", data, r, tmplAdminPerformersHTML)
+}
+
+// Вспомогательная функция для генерации диапазона страниц
+func generatePageRange(current, total, maxPages int) []int {
+	var pages []int
+
+	if total <= maxPages {
+		// Если страниц меньше или равно maxPages, показываем все
+		for i := 1; i <= total; i++ {
+			pages = append(pages, i)
+		}
+	} else {
+		// Определяем начальную и конечную страницу
+		start := current - maxPages/2
+		end := current + maxPages/2
+
+		if start < 1 {
+			start = 1
+			end = maxPages
+		}
+
+		if end > total {
+			end = total
+			start = total - maxPages + 1
+		}
+
+		for i := start; i <= end; i++ {
+			pages = append(pages, i)
+		}
+	}
+
+	return pages
 }
 
 // HandleJSONUpdate обработчик для JSON запросов от Fetch API.
@@ -202,6 +300,8 @@ func (p *PerformerHandlerHTML) renderPage(w http.ResponseWriter, tmpl string, da
 	parseTmpl, err := template.New(tmpl).Funcs(
 		template.FuncMap{
 			"formatDateTime": convert.FormatDateTime,
+			"add":            func(a, b int) int { return a + b },
+			"sub":            func(a, b int) int { return a - b },
 		}).ParseFiles(prefixDefaultTmpl + tmpl)
 	if err != nil {
 		p.renderErrorPage(w, http.StatusInternalServerError, msg.H7002+err.Error(), r)
@@ -228,6 +328,8 @@ func (p *PerformerHandlerHTML) renderPages(
 	parseTmpl, err := template.New(tmpl).Funcs(
 		template.FuncMap{
 			"formatDateTime": convert.FormatDateTime,
+			"add":            func(a, b int) int { return a + b },
+			"sub":            func(a, b int) int { return a - b },
 		}).ParseFiles(templatePaths...)
 
 	if err != nil {
