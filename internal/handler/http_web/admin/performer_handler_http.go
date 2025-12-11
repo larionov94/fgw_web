@@ -169,7 +169,7 @@ func (p *PerformerHandlerHTML) searchPerformerWithPagination(w http.ResponseWrit
 		}
 		totalCount = len(performers)
 
-		start := (page - 1) * pageSize
+		start := offset
 		end := start + pageSize
 		if start > totalCount {
 			start = 0

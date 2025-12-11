@@ -12,10 +12,10 @@
                 <input type="text"
                 name="search"
                 id="searchInput"
-                class="form-control"
-                placeholder="Поиск по табельному номеру..."
+                class="form-control form-control-sm" style="width: 15ch;"
+                placeholder="Поиск по ТН..."
                 value="{{.SearchQuery}}"
-                autocomplete="off">
+                autocomplete="off" maxlength="7">
             </label>
         </div>
 <!--        КНОПКИ ФИЛЬТРА ВПРИНЦИПЕ НЕ НУЖНЫ ПОИСК РАБОТАТ В АВТОМАТИЧЕСКОМ РЕЖИМЕ P.S. Оставлю на время.-->
@@ -35,7 +35,7 @@
 
     {{ if .IsSearch }}
 
-    <div class="alert {{ if eq .Pagination.TotalCount 0 }}alert-warning{{ else }}alert-info{{ end }} mt-2">
+    <div class="alert {{ if eq .Pagination.TotalCount 0 }}alert-warning{{ else }}alert-info{{ end }} mt-2 py-1 px-3">
         <i class="bi bi-{{ if eq .Pagination.TotalCount 0 }}exclamation-triangle{{ else }}info-circle{{ end }}"></i>
         {{ if .IsSearch }}
         {{ if eq .Pagination.TotalCount 0 }}
