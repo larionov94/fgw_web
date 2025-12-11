@@ -5,3 +5,5 @@ DROP PROCEDURE dbo.svPerformerFindById;
 DROP PROCEDURE dbo.svPerformerUpdById;
 DROP PROCEDURE dbo.svPerformerExistsById;
 DROP PROCEDURE dbo.svPerformersCount;
+DROP PROCEDURE dbo.dbo.svPerformersPagination;
+DROP PROCEDURE dbo.dbo.svPerformerFilterById;

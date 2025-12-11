@@ -28,6 +28,7 @@ type PerformerRepository interface {
 	ExistById(ctx context.Context, id int) (bool, error)
 	GetPerformersCount(ctx context.Context) (int, error)
 	GetPerformersWithPagination(ctx context.Context, offset, limit int) ([]*model.Performer, error)
+	FilterById(ctx context.Context, pattern string) ([]*model.Performer, error)
 }
 
 // All получить всех сотрудников из БД.
@@ -190,6 +191,49 @@ func (p *PerformerRepo) GetPerformersWithPagination(ctx context.Context, offset,
 		performers = append(performers, &performer)
 	}
 
+	if err = rows.Err(); err != nil {
+		p.logg.LogE(msg.E3205, err)
+
+		return nil, err
+	}
+
+	return performers, nil
+}
+
+func (p *PerformerRepo) FilterById(ctx context.Context, pattern string) ([]*model.Performer, error) {
+	rows, err := p.mssql.QueryContext(ctx, FGWsvPerformerFilterByIdQuery, pattern)
+	if err != nil {
+		p.logg.LogE(msg.E3206, err)
+
+		return nil, err
+	}
+	defer db.RowsClose(rows)
+
+	var performers []*model.Performer
+
+	for rows.Next() {
+		var performer model.Performer
+
+		if err = rows.Scan(
+			&performer.Id,
+			&performer.FIO,
+			&performer.BC,
+			&performer.Pass,
+			&performer.Archive,
+			&performer.IdRoleAForms,
+			&performer.IdRoleAFGW,
+			&performer.AuditRec.CreatedAt,
+			&performer.AuditRec.CreatedBy,
+			&performer.AuditRec.UpdatedAt,
+			&performer.AuditRec.UpdatedBy,
+		); err != nil {
+			p.logg.LogE(msg.E3204, err)
+
+			return nil, err
+		}
+
+		performers = append(performers, &performer)
+	}
 	if err = rows.Err(); err != nil {
 		p.logg.LogE(msg.E3205, err)
 

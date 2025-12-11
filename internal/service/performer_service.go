@@ -25,6 +25,7 @@ type PerformerUseCase interface {
 	FindByIdPerformer(ctx context.Context, id int) (*model.Performer, error)
 	GetPerformersCount(ctx context.Context) (int, error)
 	GetPerformersWithPagination(ctx context.Context, offset, limit int) ([]*model.Performer, error)
+	SearchPerformerById(ctx context.Context, pattern string) ([]*model.Performer, error)
 }
 
 func (p *PerformerService) GetAllPerformers(ctx context.Context) ([]*model.Performer, error) {
@@ -109,4 +110,8 @@ func (p *PerformerService) GetPerformersCount(ctx context.Context) (int, error) 
 // GetPerformersWithPagination получить исполнителей с нумерацией страниц.
 func (p *PerformerService) GetPerformersWithPagination(ctx context.Context, offset, limit int) ([]*model.Performer, error) {
 	return p.performerRepo.GetPerformersWithPagination(ctx, offset, limit)
+}
+
+func (p *PerformerService) SearchPerformerById(ctx context.Context, pattern string) ([]*model.Performer, error) {
+	return p.performerRepo.FilterById(ctx, pattern)
 }

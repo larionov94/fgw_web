@@ -9,6 +9,7 @@ const (
 	FGWsvPerformerExistsByIdQuery  = "exec dbo.svPerformerExistsById ?;"       // ХП проверяет, существует ли сотрудник.
 	FGWsvPerformersCountQuery      = "exec dbo.svPerformersCount;"             // ХП считает общее кол-во сотрудников.
 	FGWsvPerformersPaginationQuery = "exec dbo.svPerformersPagination ?, ?;"   // ХП получает сотрудников с нумерации страниц.
+	FGWsvPerformerFilterByIdQuery  = "exec dbo.svPerformerFilterById ?;"       // ХП ищет сотрудника по табельному номеру.
 )
 
 // РОЛИ

@@ -126,7 +126,7 @@ BEGIN
 END
 GO;
 
-CREATE PROCEDURE dbo.svPerformersCount -- ХП считает общее кол-во сотрудников
+CREATE PROCEDURE dbo.svPerformersCount -- ХП считает общее кол-во сотрудников.
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -165,10 +165,36 @@ BEGIN
                  created_by,
                  updated_at,
                  updated_by,
-                 ROW_NUMBER() OVER ( ORDER BY id DESC ) AS RowNum
+                 ROW_NUMBER() OVER ( ORDER BY id ) AS RowNum
           FROM dbo.svPerformers) AS Paginated
     WHERE RowNum > @Offset
       AND RowNum <= @Limit;
+
+END
+GO;
+
+CREATE PROCEDURE dbo.svPerformerFilterById -- ХП ищет сотрудника по табельному номеру.
+    @IdPattern VARCHAR(7) = null -- Паттерн поиска (например, "1", "12")
+AS
+BEGIN
+
+    SET NOCOUNT ON;
+
+    SELECT id,
+           fio,
+           bc,
+           pass,
+           archive,
+           id_role_a_forms,
+           id_role_a_fgw,
+           created_at,
+           created_by,
+           updated_at,
+           updated_by
+    FROM dbo.svPerformers
+    WHERE (
+              @IdPattern IS NULL OR CONVERT(VARCHAR(7), id) LIKE '%' + @IdPattern + '%')
+    ORDER BY id;
 
 END
 GO;
