@@ -174,7 +174,7 @@ END
 GO;
 
 CREATE PROCEDURE dbo.svPerformerFilterById -- ХП ищет сотрудника по табельному номеру.
-    @IdPattern VARCHAR(7) = null -- Паттерн поиска (например, "1", "12")
+    @IdPattern VARCHAR(7) = N'' -- Паттерн поиска (например, "1", "12")
 AS
 BEGIN
 
@@ -192,8 +192,7 @@ BEGIN
            updated_at,
            updated_by
     FROM dbo.svPerformers
-    WHERE (
-              @IdPattern IS NULL OR CONVERT(VARCHAR(7), id) LIKE '%' + @IdPattern + '%')
+    WHERE CONVERT(VARCHAR(7), id) LIKE '%' + @IdPattern + '%'
     ORDER BY id;
 
 END

@@ -35,6 +35,10 @@ const (
 )
 
 var authPerformerId int
+var startItem int
+var endItem int
+var totalPages int
+var pages []int
 
 type PerformerHandlerHTML struct {
 	performerService service.PerformerUseCase
@@ -69,6 +73,8 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 	}
 
 	pageStr := r.URL.Query().Get("page")
+	searchPattern := r.URL.Query().Get("search")
+
 	page, err := http_web.GetParametersPagination(pageStr, numberPageDefault)
 	if err != nil {
 		http_err.SendErrorHTTP(w, http.StatusNotFound, "", p.logg, r)
@@ -76,18 +82,8 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 		return
 	}
 
-	totalCount, err := p.performerService.GetPerformersCount(r.Context())
-	if err != nil {
-		http_err.SendErrorHTTP(w, http.StatusNotFound, err.Error(), p.logg, r)
-
-		return
-	}
-
-	offset := (page - 1) * pageSize
-	performers, err := p.performerService.GetPerformersWithPagination(r.Context(), offset, pageSize)
-	if err != nil {
-		http_err.SendErrorHTTP(w, http.StatusNotFound, err.Error(), p.logg, r)
-
+	totalCount, performers, err, done := p.searchPerformerWithPagination(w, r, page, searchPattern, err)
+	if done {
 		return
 	}
 
@@ -112,23 +108,6 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 		return
 	}
 
-	totalPages, err := http_web.CalculatePage(totalCount, pageSize, page)
-	if err != nil {
-		http_err.SendErrorHTTP(w, http.StatusNotFound, err.Error(), p.logg, r)
-
-		return
-	}
-
-	pages := http_web.GeneratePageRange(page, totalPages, maxPage)
-
-	countPerformers := len(performers)
-	startItem, endItem, err := http_web.CalculateRangeOfElements(offset, totalCount, countPerformers)
-	if err != nil {
-		http_err.SendErrorHTTP(w, http.StatusNotFound, err.Error(), p.logg, r)
-
-		return
-	}
-
 	data := struct {
 		Title         string
 		CurrentPage   string
@@ -138,6 +117,8 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 		PerformerId   int
 		PerformerRole string
 		Pagination    model.Pagination
+		SearchQuery   string // Новое поле для поиска
+		IsSearch      bool   // Флаг поиска
 	}{
 		Title:         "Список сотрудников",
 		CurrentPage:   "performers",
@@ -156,9 +137,67 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 			EndItem:        endItem,
 			PerformerIdStr: performerId,
 		},
+		SearchQuery: searchPattern,
+		IsSearch:    searchPattern != "",
 	}
 
 	p.renderPages(w, tmplAdminHTML, data, r, tmplAdminPerformersHTML)
+}
+
+func (p *PerformerHandlerHTML) searchPerformerWithPagination(w http.ResponseWriter, r *http.Request, page int, searchPattern string, err error) (int, []*model.Performer, error, bool) {
+	var totalCount int
+	var performers []*model.Performer
+	var offset = (page - 1) * pageSize
+
+	if searchPattern != "" {
+		performers, err = p.performerService.SearchPerformerById(r.Context(), searchPattern)
+		if err != nil {
+			http_err.SendErrorHTTP(w, http.StatusNotFound, "", p.logg, r)
+
+			return 0, nil, nil, true
+		}
+		totalCount = len(performers)
+
+		startItem, endItem, err = http_web.CalculateRangeOfElements(offset, totalCount, pageSize, false)
+		if err != nil {
+			http_err.SendErrorHTTP(w, http.StatusNotFound, err.Error(), p.logg, r)
+
+			return 0, nil, nil, true
+		}
+
+		performers = performers[startItem:endItem]
+	} else {
+		totalCount, err = p.performerService.GetPerformersCount(r.Context())
+		if err != nil {
+			http_err.SendErrorHTTP(w, http.StatusNotFound, err.Error(), p.logg, r)
+
+			return 0, nil, nil, true
+		}
+
+		performers, err = p.performerService.GetPerformersWithPagination(r.Context(), offset, pageSize)
+		if err != nil {
+			http_err.SendErrorHTTP(w, http.StatusNotFound, err.Error(), p.logg, r)
+
+			return 0, nil, nil, true
+		}
+		countPerformers := len(performers)
+		startItem, endItem, err = http_web.CalculateRangeOfElements(offset, totalCount, countPerformers, true)
+		if err != nil {
+			http_err.SendErrorHTTP(w, http.StatusNotFound, err.Error(), p.logg, r)
+
+			return 0, nil, nil, true
+
+		}
+		totalPages, err = http_web.CalculatePage(totalCount, pageSize, page)
+		if err != nil {
+			http_err.SendErrorHTTP(w, http.StatusNotFound, err.Error(), p.logg, r)
+
+			return 0, nil, nil, true
+		}
+
+		pages = http_web.GeneratePageRange(page, totalPages, maxPage)
+	}
+	return totalCount, performers, err, false
 }
 
 // HandleJSONUpdate обработчик для JSON запросов от Fetch API.

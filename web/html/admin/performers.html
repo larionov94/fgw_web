@@ -4,15 +4,66 @@
     <h1 class="h2 mb-3">{{ .Title }}</h1>
 </div>
 
-{{ if .Performers }}
+<!-- Блок поиска всегда отображается -->
+<div class="search-container mb-3">
+    <form method="GET" action="/admin/performers" class="row g-2" id="searchForm">
+        <div class="col-auto">
+            <label for="searchInput">
+                <input type="text"
+                name="search"
+                id="searchInput"
+                class="form-control"
+                placeholder="Поиск по табельному номеру..."
+                value="{{.SearchQuery}}"
+                autocomplete="off">
+            </label>
+        </div>
+<!--        КНОПКИ ФИЛЬТРА ВПРИНЦИПЕ НЕ НУЖНЫ ПОИСК РАБОТАТ В АВТОМАТИЧЕСКОМ РЕЖИМЕ P.S. Оставлю на время.-->
+<!--        <div class="col-auto">-->
+<!--            <button type="submit" class="btn btn-primary">-->
+<!--                <i class="bi bi-search"></i> Найти-->
+<!--            </button>-->
+<!--        </div>-->
+<!--        {{if .IsSearch}}-->
+<!--        <div class="col-auto">-->
+<!--            <a href="/admin/performers" class="btn btn-secondary">-->
+<!--                <i class="bi bi-x-circle"></i> Сбросить-->
+<!--            </a>-->
+<!--        </div>-->
+<!--        {{end}}-->
+    </form>
 
+    {{ if .IsSearch }}
+
+    <div class="alert {{ if eq .Pagination.TotalCount 0 }}alert-warning{{ else }}alert-info{{ end }} mt-2">
+        <i class="bi bi-{{ if eq .Pagination.TotalCount 0 }}exclamation-triangle{{ else }}info-circle{{ end }}"></i>
+        {{ if .IsSearch }}
+        {{ if eq .Pagination.TotalCount 0 }}
+            По запросу "{{ .SearchQuery }}" ничего не найдено
+        {{ else }}
+            Поиск по "{{ .SearchQuery }}". Найдено: {{ .Pagination.TotalCount }} сотрудников
+        {{ end }}
+        {{ else }}
+            Всего сотрудников: {{ .Pagination.TotalCount }}
+        {{ end }}
+    </div>
+    {{ end }}
+</div>
+
+<!-- Информация о количестве (показываем только если есть результаты) -->
+{{ if gt .Pagination.TotalCount 0 }}
 <div class="table-info mb-1">
     <span>Всего сотрудников: {{ .Pagination.TotalCount }}</span>
     <span>Показано: {{ .Pagination.StartItem }} - {{ .Pagination.EndItem }} из {{ .Pagination.TotalCount }}</span>
 </div>
+{{ end }}
 
+<!-- Карточка с таблицей - всегда отображаем -->
 <div class="card shadow-sm">
     <div class="card-body p-0">
+
+        <!-- Таблица или сообщение об отсутствии данных -->
+        {{ if gt .Pagination.TotalCount 0 }}
         <div class="table-responsive" style="min-width: 1200px;">
             <!-- Добавляем контейнер для скролла -->
             <div style="height: calc(100vh - 400px); overflow-y: auto;">
@@ -148,18 +199,40 @@
                 </table>
             </div>
         </div>
+
+        {{ else }}
+        <!-- Сообщение когда нет данных -->
+        <div class="text-center py-5">
+            <div class="mb-3">
+                <span style="font-size: 3rem;">{{ if .IsSearch }}🔍{{ else }}👥{{ end }}</span>
+            </div>
+            <h3 class="text-muted mb-3">
+                {{ if .IsSearch }}
+                По запросу "{{.SearchQuery}}" ничего не найдено
+                {{ else }}
+                Сотрудники не найдены
+                {{ end }}
+            </h3>
+            {{ if .IsSearch }}
+            <p class="text-muted mb-4">Попробуйте изменить запрос или вернуться ко всем сотрудникам</p>
+            <a href="/admin/performers" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-left"></i> Вернуться ко всем сотрудникам
+            </a>
+            {{ end }}
+        </div>
+        {{ end }}
+
     </div>
 </div>
 
-
-<!-- Пагинация -->
-{{ if .Pagination.TotalPages }}
+<!-- Пагинация (показываем только если есть страницы) -->
+{{ if and .Pagination.TotalPages (gt .Pagination.TotalCount 0) }}
 <nav aria-label="Навигация по страницам" class="mt-4">
     <ul class="pagination justify-content-center mb-0">
         <!-- Кнопка первой страницы (<<) -->
         {{ if gt .Pagination.Page 1 }}
         <li class="page-item">
-            <a href="/admin/performers?page=1{{ if .PerformerId }}&performerId={{ .PerformerId }}{{ end }}"
+            <a href="/admin/performers?page=1{{ if .PerformerId }}&performerId={{ .PerformerId }}{{ end }}{{ if .SearchQuery }}&search={{ .SearchQuery }}{{ end }}"
                class="page-link"
                aria-label="Первая страница">
                 <span aria-hidden="true">&laquo;&laquo;</span>
@@ -174,7 +247,7 @@
         <!-- Кнопка предыдущей страницы (<) -->
         {{ if gt .Pagination.Page 1 }}
         <li class="page-item">
-            <a href="/admin/performers?page={{ sub .Pagination.Page 1 }}{{ if .PerformerId }}&performerId={{ .PerformerId }}{{ end }}"
+            <a href="/admin/performers?page={{ sub .Pagination.Page 1 }}{{ if .PerformerId }}&performerId={{ .PerformerId }}{{ end }}{{ if .SearchQuery }}&search={{ .SearchQuery }}{{ end }}"
                class="page-link"
                aria-label="Предыдущая страница">
                 <span aria-hidden="true">&laquo;</span>
@@ -194,7 +267,7 @@
         </li>
         {{ else }}
         <li class="page-item">
-            <a href="/admin/performers?page={{ . }}{{ if $.PerformerId }}&performerId={{ $.PerformerId }}{{ end }}"
+            <a href="/admin/performers?page={{ . }}{{ if $.PerformerId }}&performerId={{ $.PerformerId }}{{ end }}{{ if $.SearchQuery }}&search={{ $.SearchQuery }}{{ end }}"
                class="page-link">{{ . }}</a>
         </li>
         {{ end }}
@@ -203,7 +276,7 @@
         <!-- Кнопка следующей страницы (>) -->
         {{ if lt .Pagination.Page .Pagination.TotalPages }}
         <li class="page-item">
-            <a href="/admin/performers?page={{ add .Pagination.Page 1 }}{{ if .PerformerId }}&performerId={{ .PerformerId }}{{ end }}"
+            <a href="/admin/performers?page={{ add .Pagination.Page 1 }}{{ if .PerformerId }}&performerId={{ .PerformerId }}{{ end }}{{ if .SearchQuery }}&search={{ .SearchQuery }}{{ end }}"
                class="page-link"
                aria-label="Следующая страница">
                 <span aria-hidden="true">&raquo;</span>
@@ -218,7 +291,7 @@
         <!-- Кнопка последней страницы (>>) -->
         {{ if lt .Pagination.Page .Pagination.TotalPages }}
         <li class="page-item">
-            <a href="/admin/performers?page={{ .Pagination.TotalPages }}{{ if .PerformerId }}&performerId={{ .PerformerId }}{{ end }}"
+            <a href="/admin/performers?page={{ .Pagination.TotalPages }}{{ if .PerformerId }}&performerId={{ .PerformerId }}{{ end }}{{ if .SearchQuery }}&search={{ .SearchQuery }}{{ end }}"
                class="page-link"
                aria-label="Последняя страница">
                 <span aria-hidden="true">&raquo;&raquo;</span>
@@ -236,16 +309,6 @@
         Страница {{ .Pagination.Page }} из {{ .Pagination.TotalPages }}
     </div>
 </nav>
-{{ end }}
-
-
-{{ else }}
-<div class="text-center py-5">
-    <div class="mb-3">
-        <span style="font-size: 3rem;">👥</span>
-    </div>
-    <h3 class="text-muted mb-3">Сотрудники не найдены</h3>
-</div>
 {{ end }}
 
 {{ end }}

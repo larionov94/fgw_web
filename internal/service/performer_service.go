@@ -6,6 +6,7 @@ import (
 	"FGW_WEB/pkg/common"
 	"FGW_WEB/pkg/common/msg"
 	"context"
+	"strings"
 )
 
 type PerformerService struct {
@@ -113,5 +114,13 @@ func (p *PerformerService) GetPerformersWithPagination(ctx context.Context, offs
 }
 
 func (p *PerformerService) SearchPerformerById(ctx context.Context, pattern string) ([]*model.Performer, error) {
+	// Преобразуем pattern для безопасности
+	pattern = strings.TrimSpace(pattern)
+
+	// Если pattern пустой, возвращаем пустой результат
+	if pattern == "" {
+		return []*model.Performer{}, nil
+	}
+
 	return p.performerRepo.FilterById(ctx, pattern)
 }

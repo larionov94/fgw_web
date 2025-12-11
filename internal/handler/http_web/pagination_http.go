@@ -57,7 +57,7 @@ func GetParametersPagination(pageStr string, numberPageDefault int) (int, error)
 }
 
 // CalculateRangeOfElements рассчитать отображаемый диапазон элементов.
-func CalculateRangeOfElements(offset int, totalCount int, countOnPage int) (int, int, error) {
+func CalculateRangeOfElements(offset int, totalCount int, countOnPage int, isNumDefault bool) (int, int, error) {
 	if offset < 0 || totalCount < 0 || countOnPage < 0 {
 		return 0, 0, fmt.Errorf("%s", msg.E3301)
 	}
@@ -70,8 +70,18 @@ func CalculateRangeOfElements(offset int, totalCount int, countOnPage int) (int,
 		return 0, 0, fmt.Errorf("%s: %d > %d", msg.E3303, offset, totalCount)
 	}
 
-	startItem := offset + numerationDefault
+	var startItem int
+	if isNumDefault {
+		startItem = offset + numerationDefault
+	} else {
+		startItem = offset
+	}
+
 	endItem := offset + countOnPage
+
+	if startItem > totalCount {
+		startItem = 0
+	}
 
 	if endItem > totalCount {
 		endItem = totalCount
