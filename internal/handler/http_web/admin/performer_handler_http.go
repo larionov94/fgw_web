@@ -29,7 +29,7 @@ const (
 	prefixDefaultTmpl = "web/html/"
 	prefixAdminTmpl   = "web/html/admin/"
 
-	pageSize          = 15
+	pageSize          = 55
 	maxPage           = 5
 	numberPageDefault = 1
 )

@@ -1,66 +1,155 @@
-/*БОКОВОЕ МЕНЮ */
-.sidebar {
-    min-height: 100vh;
+/* Дополнительные стили для горизонтального меню */
+.navbar-user-info {
     background-color: #f8f9fa;
-    border-right: 1px solid #dee2e6;
-    width: 250px;
-    position: fixed;
-    left: 0;
-    top: 0;
-    padding: 20px;
-    transition: all 0.3s;
+    border-radius: 5px;
+    padding: 0.5rem 1rem;
+    margin-right: 1rem;
+    border-left: 3px solid #007bff;
 }
 
-.user-info {
-    padding: 15px;
-    background: white;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+.navbar-user-info div {
+    display: inline-block;
+    margin-right: 15px;
+    font-size: 0.875rem;
+    position: relative;
 }
 
-.nav-link {
-    color: #333;
-    padding: 12px 15px;
-    margin: 5px 0;
-    border-radius: 6px;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    text-decoration: none;
+/* Сепаратор между блоками */
+.navbar-user-info div:not(:last-child)::after {
+    content: "|";
+    position: absolute;
+    right: -10px;
+    color: #adb5bd;
+    font-weight: normal;
 }
 
-.nav-link:hover {
-    background-color: #e9ecef;
-    color: #0d6efd;
+.navbar-user-info .fw-bold {
+    color: #495057;
+    margin-right: 5px;
 }
 
-.nav-link.active {
-    background-color: #0d6efd;
-    color: white;
+.navbar-user-info div:last-child {
+    margin-right: 0;
 }
 
-.nav-link i {
-    width: 20px;
-    text-align: center;
+/* Убираем flex-контейнер для основного содержимого */
+body {
+    padding-top: 30px; /* Отступ для фиксированной навигации */
 }
 
 .main-content {
-    margin-left: 270px;
-    padding: 30px;
+    padding: 20px;
 }
 
-@media (max-width: 768px) {
-    .sidebar {
-        width: 100%;
-        position: relative;
-        height: auto;
-        min-height: auto;
+/* Стили для выпадающего меню с информацией о пользователе */
+.user-dropdown {
+    margin-right: 15px;
+}
+
+.user-dropdown .dropdown-toggle {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 4px;
+}
+
+.user-dropdown .dropdown-toggle::after {
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+/* Основные отступы для выпадающего меню */
+.dropdown-user-info {
+    min-width: 280px;
+    padding: 1.25rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+/* Отступы для элементов внутри выпадающего меню */
+.dropdown-user-info > div {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.dropdown-user-info > div:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+/* Отступы для текста внутри элементов */
+.dropdown-user-info .fw-bold {
+    display: inline-block;
+    color: #495057;
+    margin-right: 10px;
+}
+
+.dropdown-user-info span:not(.fw-bold) {
+    color: #212529;
+}
+/* Фиксированный заголовок таблицы */
+#performersTable thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #f8f9fa;
+}
+
+
+/* Заголовок выпадающего меню */
+.dropdown-user-header {
+    padding: 0.75rem 1.5rem;
+    margin-bottom: 0.75rem;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 600;
+    color: #495057;
+    border-radius: 8px 8px 0 0;
+}
+
+/* Сепараторы для мобильного вида */
+.user-info-mobile .col-4 {
+    position: relative;
+    text-align: center;
+}
+
+.user-info-mobile .col-4:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 60%;
+    width: 1px;
+    background-color: #dee2e6;
+}
+
+/* Стили для мобильного меню */
+@media (max-width: 992px) {
+    .navbar-user-info {
+        display: none;
+    }
+    .nav-info {
+        display: flex;
     }
 
-    .main-content {
-        margin-left: 0;
+    .user-info-mobile {
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        margin-bottom: 15px;
+        border-radius: 8px;
+    }
+
+    .user-dropdown {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+
+    .navbar-brand {
+        font-size: 1rem;
     }
 }
 
@@ -144,15 +233,6 @@
     opacity: 0.9;
 }
 
-/* Код стили */
-code {
-    padding: 2px 6px;
-    background-color: #f8f9fa;
-    border-radius: 3px;
-    font-family: 'Courier New', monospace;
-    font-size: 0.85em;
-}
-
 /* Адаптивность */
 @media (max-width: 768px) {
     .table-responsive {
@@ -161,7 +241,7 @@ code {
 
     .table th,
     .table td {
-        padding: 8px 12px;
+        padding: 4px 6px;
         font-size: 0.8rem;
     }
 
