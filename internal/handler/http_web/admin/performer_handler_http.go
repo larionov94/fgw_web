@@ -24,7 +24,6 @@ const (
 	tmplErrorHTML           = "error.html"
 	tmplAdminHTML           = "admin.html"
 	prefixTmplAdmin         = "web/html/admin/"
-	//urlAdminPerformers      = "/admin/performers"
 
 	prefixDefaultTmpl = "web/html/"
 	prefixAdminTmpl   = "web/html/admin/"
@@ -127,8 +126,8 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 		PerformerId   int
 		PerformerRole string
 		Pagination    model.Pagination
-		SearchQuery   string // Новое поле для поиска
-		IsSearch      bool   // Флаг поиска
+		SearchQuery   string
+		IsSearch      bool
 	}{
 		Title:         "Список сотрудников",
 		CurrentPage:   "performers",
