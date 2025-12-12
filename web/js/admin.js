@@ -1,10 +1,10 @@
-// Защита от навигации по истории для защищенных страниц
+// 1. Защита от навигации по истории для защищенных страниц
 (function () {
     let sessionCheckInterval;
     let isCheckingSession = false;
     let lastActivity = Date.now();
 
-    // Функция проверки сессии
+    // 2. Функция проверки сессии
     function checkSession() {
         if (isCheckingSession) return;
 
@@ -14,80 +14,79 @@
             method: 'HEAD',
             credentials: 'include'
         })
-            .then(function(response) {
+            .then(function (response) {
                 if (!response.ok) {
-                    // Сессия невалидна - logout
+                    // 2.1. Сессия невалидна - logout
                     console.log('Сессия истекла, выполняется выход...');
                     window.location.href = '/logout';
                     return;
                 }
 
-                // Проверяем заголовки если нужно
+                // 2.2. Проверяем заголовки если нужно
                 const sessionStatus = response.headers.get('Session-Status');
                 if (sessionStatus && sessionStatus !== 'active') {
                     console.log('Статус сессии:', sessionStatus);
                     window.location.href = '/logout';
                 }
 
-                // Обновляем время последней активности
+                // 2.3. Обновляем время последней активности
                 lastActivity = Date.now();
             })
-            .catch(function(error) {
+            .catch(function (error) {
                 console.error('Ошибка проверки сессии:', error);
-                // При ошибке сети не делаем logout сразу
-                // можно попробовать снова через некоторое время
+                // 2.4 При ошибке сети не делаем logout сразу можно попробовать снова через некоторое время
             })
-            .finally(function() {
+            .finally(function () {
                 isCheckingSession = false;
             });
     }
 
-    // Функция проверки не активности пользователя
+    // 1. Функция проверки не активности пользователя
     function checkInactivity() {
         const now = Date.now();
         const inactiveTime = now - lastActivity;
 
-        // Если неактивны более 10 минут - показываем предупреждение
+        // 2. Если неактивны более 10 минут - показываем предупреждение
         if (inactiveTime > 10 * 60 * 1000) {
             const userConfirmed = confirm('Вы неактивны более 10 минут. Сессия будет завершена через 5 минут.');
             if (userConfirmed) {
-                // Сброс времени активности
+                // 2.1. Сброс времени активности
                 lastActivity = Date.now();
-                // Принудительная проверка сессии
+                // 2.2. Принудительная проверка сессии
                 checkSession();
             }
         }
 
-        // Если неактивны более 15 минут - принудительный выход
+        // 3. Если неактивны более 15 минут - принудительный выход
         if (inactiveTime > 15 * 60 * 1000) {
             alert('Сессия завершена из-за не активности.');
             window.location.href = '/logout';
         }
     }
 
-    // Обновление времени активности при действиях пользователя
+    // 1. Обновление времени активности при действиях пользователя
     function updateActivity() {
         lastActivity = Date.now();
     }
 
-    // События активности пользователя
-    ['click', 'keypress', 'mousemove', 'scroll', 'touchstart'].forEach(function(eventName) {
-        document.addEventListener(eventName, updateActivity, { passive: true });
+    // 2. События активности пользователя
+    ['click', 'keypress', 'mousemove', 'scroll', 'touchstart'].forEach(function (eventName) {
+        document.addEventListener(eventName, updateActivity, {passive: true});
     });
 
-    // Инициализация
+    // 3. Инициализация
     function initSessionMonitoring() {
-        // Первая проверка через 1 минуту после загрузки
+        // 3.1. Первая проверка через 1 минуту после загрузки
         setTimeout(checkSession, 60000);
 
-        // Затем каждые 5 минут
+        // 3.2. Затем каждые 5 минут
         sessionCheckInterval = setInterval(checkSession, 300000);
 
-        // Проверка не активности каждую минуту
+        // 3.3. Проверка не активности каждую минуту
         setInterval(checkInactivity, 60000);
     }
 
-    // Заменяем состояние в истории
+    // 4. Заменяем состояние в истории
     if (window.history.replaceState) {
         history.replaceState({
             authed: true,
@@ -95,7 +94,7 @@
         }, '', window.location.pathname);
     }
 
-    // Обработчик навигации
+    // 5. Обработчик навигации
     window.addEventListener('popstate', function (event) {
         if (!event.state || event.state.authed !== true) {
             // Пытаемся уйти с защищенной страницы
@@ -103,21 +102,20 @@
         }
     });
 
-    // Защита от кэширования
+    // 6. Защита от кэширования
     window.addEventListener('pageshow', function (event) {
         if (event.persisted) {
             window.location.reload();
         }
     });
 
-    // Запускаем мониторинг сессии
+    // 7. Запускаем мониторинг сессии
     initSessionMonitoring();
 
-    // Очистка при закрытии страницы
-    window.addEventListener('beforeunload', function() {
+    // 8. Очистка при закрытии страницы
+    window.addEventListener('beforeunload', function () {
         if (sessionCheckInterval) {
             clearInterval(sessionCheckInterval);
         }
     });
-
 })();

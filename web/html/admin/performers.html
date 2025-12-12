@@ -8,29 +8,25 @@
 <div class="search-container mb-3">
     <form method="GET" action="/admin/performers" class="row g-2" id="searchForm">
         <div class="col-auto">
-            <label for="searchInput">
+            <label for="searchInput" style="position: relative; display: inline-block;">
                 <input type="text"
-                name="search"
-                id="searchInput"
-                class="form-control form-control-sm" style="width: 15ch;"
-                placeholder="Поиск по ТН..."
-                value="{{.SearchQuery}}"
-                autocomplete="off" maxlength="7">
+                       name="search"
+                       id="searchInput"
+                       class="form-control form-control-sm"
+                       style="width: 15ch; padding-right: 15px;"
+                       placeholder="Поиск по ТН..."
+                       value="{{.SearchQuery}}"
+                       autocomplete="off"
+                       maxlength="7">
+
+                {{if .SearchQuery}}
+                <span id="clearSearchIcon"
+                      style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #999; font-size: 14px;">
+        ✗
+    </span>
+                {{end}}
             </label>
         </div>
-<!--        КНОПКИ ФИЛЬТРА ВПРИНЦИПЕ НЕ НУЖНЫ ПОИСК РАБОТАТ В АВТОМАТИЧЕСКОМ РЕЖИМЕ P.S. Оставлю на время.-->
-<!--        <div class="col-auto">-->
-<!--            <button type="submit" class="btn btn-primary">-->
-<!--                <i class="bi bi-search"></i> Найти-->
-<!--            </button>-->
-<!--        </div>-->
-<!--        {{if .IsSearch}}-->
-<!--        <div class="col-auto">-->
-<!--            <a href="/admin/performers" class="btn btn-secondary">-->
-<!--                <i class="bi bi-x-circle"></i> Сбросить-->
-<!--            </a>-->
-<!--        </div>-->
-<!--        {{end}}-->
     </form>
 
     {{ if .IsSearch }}
@@ -39,12 +35,12 @@
         <i class="bi bi-{{ if eq .Pagination.TotalCount 0 }}exclamation-triangle{{ else }}info-circle{{ end }}"></i>
         {{ if .IsSearch }}
         {{ if eq .Pagination.TotalCount 0 }}
-            По запросу "{{ .SearchQuery }}" ничего не найдено
+        По запросу "{{ .SearchQuery }}" ничего не найдено
         {{ else }}
-            Поиск по "{{ .SearchQuery }}". Найдено: {{ .Pagination.TotalCount }} сотрудников
+        Поиск по "{{ .SearchQuery }}". Найдено: {{ .Pagination.TotalCount }} сотрудников
         {{ end }}
         {{ else }}
-            Всего сотрудников: {{ .Pagination.TotalCount }}
+        Всего сотрудников: {{ .Pagination.TotalCount }}
         {{ end }}
     </div>
     {{ end }}

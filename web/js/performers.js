@@ -8,14 +8,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const btn = e.target.closest('.edit-btn');
             const row = btn.closest('tr');
 
-            enableEditMode(row);
+            enablePerformersEditMode(row);
         }
 
         if (e.target.closest('.cancel-btn')) {
             const btn = e.target.closest('.cancel-btn');
             const row = btn.closest('tr')
 
-            disableEditMode(row);
+            disablePerformersEditMode(row);
         }
 
         if (e.target.closest('.save-btn')) {
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             saveChanges(row).catch(error => {
                 console.error('Save error:', error);
-                showNotification('Ошибка при сохранении', 'danger');
+                showPerformersNotification('Ошибка при сохранении', 'danger');
 
                 // Восстанавливаем кнопку при ошибке
                 const saveBtn = row.querySelector('.save-btn');
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     });
 
-    function enableEditMode(row) {
+    function enablePerformersEditMode(row) {
         // 1. Получаем Id из data-id атрибута строки
         const performerIdStr = row.getAttribute('data-id'); // {{ .Obj }}
         const performerId = parseInt(performerIdStr, 10);
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function () {
         row.style.backgroundColor = '#f8f9fa';
     }
 
-    function disableEditMode(row) {
+    function disablePerformersEditMode(row) {
         // 1. Получаем сохраненные значения для восстановления
         const originalFormsValue = row.dataset.originalFormsValue;
         const originalFgwValue = row.dataset.originalFgwValue;
@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('Save error:', error);
 
             // Показываем уведомление об ошибке
-            showNotification(`Ошибка: ${error.message}`, 'danger');
+            showPerformersNotification(`Ошибка: ${error.message}`, 'danger');
 
             // Восстанавливаем кнопку
             saveBtn.innerHTML = '<span>✓</span>';
@@ -251,10 +251,10 @@ document.addEventListener('DOMContentLoaded', function () {
         updateBy.textContent = result.updatedBy;
 
         // 4. Выходим из режима редактирования
-        disableEditMode(row)
+        disablePerformersEditMode(row)
 
         // 5. Показываем уведомление
-        showNotification(result.message || 'Изменения успешно сохранены', 'success');
+        showPerformersNotification(result.message || 'Изменения успешно сохранены', 'success');
 
         // 6. Восстанавливаем кнопку сохранения
         const saveBtn = row.querySelector('.save-btn');
@@ -262,7 +262,7 @@ document.addEventListener('DOMContentLoaded', function () {
         saveBtn.disabled = false;
     }
 
-    function showNotification(message, type) {
+    function showPerformersNotification(message, type) {
         // Удаляем существующие уведомления
         document.querySelectorAll('.alert.position-fixed').forEach(el => el.remove());
 

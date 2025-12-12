@@ -147,17 +147,17 @@ document.addEventListener('DOMContentLoaded', function () {
         const description = descInput.value.trim();
 
         // 4. Валидация
-        // if (!name) {
-        //     showRoleNotification('Название роли не может быть пустым', 'warning');
-        //     nameInput.focus();
-        //     return;
-        // }
-        //
-        // if (!description) {
-        //     showRoleNotification('Описание роли не может быть пустым', 'warning');
-        //     descInput.focus();
-        //     return;
-        // }
+        if (!name) {
+            showRoleNotification('Название роли не может быть пустым', 'warning');
+            nameInput.focus();
+            return;
+        }
+
+        if (!description) {
+            showRoleNotification('Описание роли не может быть пустым', 'warning');
+            descInput.focus();
+            return;
+        }
 
         // 5. Показываем индикатор загрузки
         const saveBtn = row.querySelector('.save-role-btn');
