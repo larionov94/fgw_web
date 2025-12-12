@@ -22,6 +22,7 @@ const (
 	tmplRedirectHTML   = "redirect.html"
 	tmplAuthHTML       = "auth.html"
 	tmplPerformersHTML = "performers.html"
+	tmplRolesHTML      = "roles.html"
 
 	urlAdmin              = "/admin"
 	urlFGW                = "/fgw"
@@ -122,7 +123,7 @@ func (a *AuthHandlerHTML) StartPageAdmin(w http.ResponseWriter, r *http.Request)
 		PerformerRole: role.Name,
 	}
 
-	a.renderPages(w, tmplAdminHTML, data, r, tmplPerformersHTML)
+	a.renderPages(w, tmplAdminHTML, data, r, tmplPerformersHTML, tmplRolesHTML)
 }
 
 func (a *AuthHandlerHTML) StartPage(w http.ResponseWriter, r *http.Request) {

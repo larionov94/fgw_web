@@ -55,11 +55,12 @@ func StartApp() {
 	repoRole := repository.NewRoleRepo(mssqlDB, logger)
 	serviceRole := service.NewRoleService(repoRole, logger)
 	handlerRoleJSON := json_api.NewRoleHandlerJSON(serviceRole, logger)
-	handlerRoleHTML := admin.NewRoleHandlerHTML(serviceRole, logger)
 
 	repoPerformer := repository.NewPerformerRepo(mssqlDB, logger)
 	servicePerformer := service.NewPerformerService(repoPerformer, logger)
 	handlerPerformerJSON := json_api.NewPerformerHandlerJSON(servicePerformer, logger)
+
+	handlerRoleHTML := admin.NewRoleHandlerHTML(serviceRole, logger, authMiddleware, servicePerformer)
 	handlerPerformerHTML := admin.NewPerformerHandlerHTML(servicePerformer, serviceRole, logger, authMiddleware)
 
 	handlerAuthHTML := http_web.NewAuthHandlerHTML(servicePerformer, serviceRole, logger, authMiddleware)

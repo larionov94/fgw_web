@@ -8,11 +8,10 @@ type RoleList struct {
 
 // Role роль.
 type Role struct {
-	Id        int    `json:"id"`
-	Name      string `json:"name"`
-	Desc      string `json:"desc"`
-	AuditRec  Audit  `json:"auditRec"`
-	IsEditing bool   `json:"isEditing"` // Флаг для редактирования поля.
+	Id       int    `json:"id"`
+	Name     string `json:"name"`
+	Desc     string `json:"desc"`
+	AuditRec Audit  `json:"auditRec"`
 }
 
 type RoleUpdate struct {

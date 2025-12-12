@@ -8,6 +8,7 @@
     <script src="/web/libs/bootstrap.bundle.js"></script>
     <script src="/web/js/admin.js"></script>
     <script src="/web/js/performers.js"></script>
+    <script src="/web/js/roles.js"></script>
 
     <title>{{ .Title }}</title>
 </head>
@@ -77,6 +78,12 @@
                         <span class="ms-0">Сотрудники</span>
                     </a>
                 </li>
+                <li class="nav-item ms-2">
+                    <a class="nav-link {{ if eq .CurrentPage `roles` }}active{{ end }}" href="/admin/roles">
+                        <span>👥</span>
+                        <span class="ms-0">Роли</span>
+                    </a>
+                </li>
                 <!-- Добавьте другие пункты меню здесь -->
             </ul>
 
@@ -108,6 +115,17 @@
     {{ else if eq .CurrentPage `performers` }}
     {{ template "performers_content" . }}
 
+    {{ else if eq .CurrentPage "roles" }}
+    {{ template "roles_content" . }}
+
+    {{ else }}
+    <!-- Страница по умолчанию или 404 -->
+    <div class="alert alert-warning mt-5">
+        <h4 class="alert-heading">Страница не найдена</h4>
+        <p>Запрошенная страница не существует или временно недоступна.</p>
+        <hr>
+        <a href="/admin" class="btn btn-outline-primary">Вернуться на главную</a>
+    </div>
     {{ end }}
 
 </div>

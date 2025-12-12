@@ -1,116 +1,112 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/web/css/style.css" type="text/css">
-    <title>{{.Title}}</title>
-</head>
-<body>
-<div class="container">
-    <h1>{{.Title}}</h1>
+{{ define "roles_content" }}
 
-    <h2>Добавить роль сотрудника</h2>
-    <form id="roleAddForm" action="/fgw/roles/add" method="POST">
-        <label>
-            ИД роли:
-            <input type="number" name="roleId" placeholder="Введите ид роли" required>
-            <span class="error" id="number-error"></span>
-        </label>
-
-        <label>
-            Наименование роли:
-            <input type="text" name="name" placeholder="Введите наименование роли" required>
-            <span class="error" id="name-error"></span>
-        </label>
-
-        <label>
-            Описание роли:
-            <input type="text" name="description" placeholder="Введите описание роли" required>
-            <span class="error" id="desc-error"></span>
-        </label>
-
-        <!--        Убрать после написания авторизации1-->
-        <label>
-            ИД сотрудника:
-            <input type="number" name="createdBy" placeholder="Введите ид пользователя">
-            <span class="error" id="createdBy-error"></span>
-        </label>
-
-
-        <input type="submit" value="Добавить">
-    </form>
-
-
-    {{ if .Roles }}
-    <table class="performers-table">
-        <thead>
-        <tr>
-            <th>ИД</th>
-            <th>Наименование</th>
-            <th>Описание</th>
-            <th>Дата создания</th>
-            <th>ТН владельца</th>
-            <th>Дата изменения</th>
-            <th>ТН владельца</th>
-            <th>Операции</th>
-        </tr>
-        </thead>
-        <tbody>
-        {{range .Roles}}
-
-
-            <tr id="role_{{ .Id }}">
-                <td>{{ .Id }}</td>
-                {{ if .IsEditing }}
-                    <form method="POST" action="/admin/roles/upd">
-                        <td>
-                            <label>
-                                <input type="text" name="name" value="{{ .Name }}" required>
-                            </label>
-                        </td>
-                        <td>
-                            <label>
-                                <input type="text" name="description" value="{{ .Desc }}" required>
-                            </label>
-                        </td>
-                        <td>{{formatDateTime .AuditRec.CreatedAt}}</td>
-                        <td>{{ .AuditRec.CreatedBy}}</td>
-                        <td>{{formatDateTime .AuditRec.UpdatedAt}}</td>
-                        <td>
-                            <label>
-                                <input type="number" name="updatedBy" value="{{ .AuditRec.UpdatedBy}}">
-                            </label>
-                        </td>
-                        <td>
-                            <input type="hidden" name="roleId" value="{{ .Id }}">
-                            <input type="submit" value="Сохранить">
-                        </td>
-                    </form>
-                {{ else }}
-                    <td>{{ .Name }}</td>
-                    <td>{{ .Desc }}</td>
-                    <td>{{formatDateTime .AuditRec.CreatedAt}}</td>
-                    <td>{{ .AuditRec.CreatedBy}}</td>
-                    <td>{{formatDateTime .AuditRec.UpdatedAt}}</td>
-                    <td>{{ .AuditRec.UpdatedBy}}</td>
-                    <td>
-                        <a href="/admin/roles?roleId={{ .Id }}#role_{{ .Id }}">Изменить</a>
-                    </td>
-                {{ end }}
-            </tr>
-        {{end}}
-        </tbody>
-    </table>
-
-    <p style="margin-top: 20px; color: #666;">
-        Всего сотрудников: {{len .Roles}}
-    </p>
-    {{else}}
-    <p style="text-align: center; color: #666; font-style: italic;">
-        Нет данных о сотрудниках
-    </p>
-    {{end}}
+<div class="d-flex justify-content-between align-items-center">
+    <h1 class="h2 mb-3">{{ .Title }}</h1>
 </div>
-</body>
-</html>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive" style="min-width: 1200px;">
+
+            <!-- Добавляем контейнер для скролла -->
+            <div style="height: calc(100vh - 400px); overflow-y: auto;">
+                <table class="table table-hover mb-0" style="min-width: 1200px;" id="rolesTable">
+
+                    {{ if .Roles }}
+                    <thead>
+                    <tr>
+                        <th class="text-nowrap">ИД</th>
+                        <th class="text-nowrap">Наименование</th>
+                        <th class="text-nowrap">Описание</th>
+                        <th class="text-nowrap">Дата создания</th>
+                        <th class="text-nowrap">ТН владельца</th>
+                        <th class="text-nowrap">Дата изменения</th>
+                        <th class="text-nowrap">ТН владельца</th>
+                        <th class="text-nowrap">Операции</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+
+                    {{ range .Roles }}
+                    <tr id="role-{{ .Id }}" data-id="{{ .Id }}">
+                        <!-- ИД (всегда в режиме просмотра) -->
+                        <td class="fw-semibold">{{ .Id }}</td>
+
+                        <!-- Наименование - режим просмотра -->
+                        <td class="view-mode forms-name">{{ .Name }}</td>
+
+                        <!-- Описание - режим просмотра -->
+                        <td class="view-mode forms-desc">{{ .Desc }}</td>
+
+                        <!-- Наименование - режим редактирования (скрыт) -->
+                        <td class="edit-mode" style="display: none;">
+                            <input type="text"
+                                   name="name"
+                                   value="{{ .Name }}"
+                                   class="form-control form-control-sm"
+                                   data-original="{{ .Name }}"
+                                   required>
+                        </td>
+
+                        <!-- Описание - режим редактирования (скрыт) -->
+                        <td class="edit-mode" style="display: none;">
+                            <input type="text"
+                                   name="description"
+                                   value="{{ .Desc }}"
+                                   class="form-control form-control-sm"
+                                   data-original="{{ .Desc }}"
+                                   required>
+                        </td>
+
+                        <!-- Дата создания (всегда в режиме просмотра) -->
+                        <td>{{ formatDateTime .AuditRec.CreatedAt }}</td>
+
+                        <!-- ТН создателя (всегда в режиме просмотра) -->
+                        <td>{{ .AuditRec.CreatedBy }}</td>
+
+                        <!-- Дата изменения -->
+                        <td class="update-at">{{ formatDateTime .AuditRec.UpdatedAt }}</td>
+
+                        <!-- ТН редактора -->
+                        <td class="update-by">{{ .AuditRec.UpdatedBy }}</td>
+
+                        <!-- Кнопки операций -->
+                        <td>
+                            <div class="d-flex justify-content-center gap-2">
+                                <!-- Кнопка редактирования (отображается в view-mode) -->
+                                <button class="btn btn-sm btn-outline-primary edit-btn"
+                                        title="Редактировать">
+                                    <span>✏️</span>
+                                </button>
+
+                                <!-- Кнопки сохранения/отмены (скрыты в view-mode) -->
+                                <div class="edit-buttons" style="display: none;">
+                                    <button class="btn btn-sm btn-success save-role-btn" title="Сохранить">
+                                        <span>✓</span>
+                                    </button>
+                                    <button class="btn btn-sm btn-secondary cancel-btn" title="Отмена">
+                                        <span>✗</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {{ end }}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <p style="margin-top: 20px; color: #666;">
+            Всего ролей: {{ len .Roles }}
+        </p>
+        {{ else }}
+        <p style="text-align: center; color: #666; font-style: italic;">
+            Нет данных о ролях
+        </p>
+        {{ end }}
+
+    </div>
+</div>
+
+{{ end }}

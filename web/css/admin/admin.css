@@ -90,7 +90,7 @@ body {
     color: #212529;
 }
 /* Фиксированный заголовок таблицы */
-#performersTable thead {
+#performersTable #rolesTable thead {
     position: sticky;
     top: 0;
     z-index: 10;

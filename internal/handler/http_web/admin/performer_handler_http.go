@@ -150,7 +150,7 @@ func (p *PerformerHandlerHTML) AllPerformersHTML(w http.ResponseWriter, r *http.
 		IsSearch:    searchPattern != "",
 	}
 
-	p.renderPages(w, tmplAdminHTML, data, r, tmplAdminPerformersHTML)
+	p.renderPages(w, tmplAdminHTML, data, r, tmplAdminPerformersHTML, tmplAdminRolesHTML)
 }
 
 // searchPerformerWithPagination поиск сотрудника с пагинацией.
@@ -285,6 +285,7 @@ func (p *PerformerHandlerHTML) renderPage(w http.ResponseWriter, tmpl string, da
 			"add":            func(a, b int) int { return a + b },
 			"sub":            func(a, b int) int { return a - b },
 		}).ParseFiles(prefixDefaultTmpl + tmpl)
+
 	if err != nil {
 		p.renderErrorPage(w, http.StatusInternalServerError, msg.H7002+err.Error(), r)
 
@@ -313,7 +314,6 @@ func (p *PerformerHandlerHTML) renderPages(
 			"add":            func(a, b int) int { return a + b },
 			"sub":            func(a, b int) int { return a - b },
 		}).ParseFiles(templatePaths...)
-
 	if err != nil {
 		p.renderErrorPage(w, http.StatusInternalServerError, msg.H7002+err.Error(), r)
 
