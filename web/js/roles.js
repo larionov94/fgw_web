@@ -36,7 +36,21 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
+        if (e.target.closest('.add-role-btn')) {
+            const btn = e.target.closest('.add-role-btn');
+            const row = btn.closest('tr');
+
+            // Сохраняем изменения и игнорируем повторные клики
+            if (btn.disabled) return;
+
+            addChanges(row).catch(error => {
+                console.error('Save error:', error);
+                showRoleNotification('Ошибка при сохранении', 'danger');
+            });
+        }
+
     });
+
     function enableRoleEditMode(row) {
         // 1. Получаем Id из data-id атрибута строки
         const roleIdStr = row.getAttribute('data-id'); // {{ .Obj }}
@@ -90,6 +104,80 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // 11. Фокус на первое поле
         nameInput.focus();
+    }
+
+    async function addChanges(row) {
+        const roleIdInput = document.getElementById('newRoleId');
+        const nameInput = document.getElementById('newRoleName');
+        const descriptionInput = document.getElementById('newRoleDescription');
+
+        const roleId = roleIdInput ? parseInt(roleIdInput.value.trim(), 10) : 0;
+        const name = nameInput ? nameInput.value.trim() : '';
+        const description = descriptionInput ? descriptionInput.value.trim() : '';
+
+        try {
+            // 6. Отправляем запрос через Fetch API
+            const response = await fetch('/admin/roles/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    RoleId: roleId,
+                    Name: name,
+                    Description: description
+                })
+            });
+
+            // 7. Проверяем статус ответа
+            if (!response.ok) {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const result = await response.json();
+                    new Error(result.error || `HTTP ${response.status}`);
+                } else {
+                    new Error(`HTTP ${response.status}`);
+                }
+            }
+
+            // 9. Парсим JSON ответ
+            const result = await response.json();
+
+            // 10. Успешное обновление
+            handleSuccessAdd(row, result, roleId, name, description);
+        } catch (error) {
+            console.error('Save error:', error);
+
+            // Показываем уведомление об ошибке
+            showRoleNotification(`Ошибка: ${error.message}`, 'danger');
+
+            throw error; // Пробрасываем ошибку дальше
+        }
+
+    }
+
+
+
+    function handleSuccessAdd(row, result) {
+        if (result.success) {
+            // Показываем уведомление об успехе
+            showRoleNotification(result.message || 'Роль успешно добавлена', 'success');
+
+            // Закрываем модальное окно
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addRoleModal'));
+            if (modal) {
+                // modal.blur()
+                modal.hide();
+            }
+        } else {
+            // Ошибка от сервера
+            showRoleNotification(result.message || 'Ошибка при добавлении роли', 'danger');
+
+        }
+
+        // 5. Показываем уведомление
+        showRoleNotification(result.message || 'Изменения успешно сохранены', 'success');
+
     }
 
     function disableRoleEditMode(row) {
@@ -183,9 +271,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.includes('application/json')) {
                     const result = await response.json();
-                     new Error(result.error || `HTTP ${response.status}`);
+                    throw new Error(result.error || `HTTP ${response.status}`);
                 } else {
-                     new Error(`HTTP ${response.status}`);
+                    throw new Error(`HTTP ${response.status}`);
                 }
             }
 
@@ -218,7 +306,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         row.querySelector('.forms-name').textContent = name;
         row.querySelector('.forms-desc').textContent = description;
-    
+
         // 3. Обновляем значения в input и data-атрибутах
         const nameInput = row.querySelector('input[name="name"]');
         const descInput = row.querySelector('input[name="description"]');

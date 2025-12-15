@@ -3,6 +3,58 @@
 <div class="d-flex justify-content-between align-items-center">
     <h1 class="h2 mb-3">{{ .Title }}</h1>
 </div>
+<!-- Модальное окно для добавления роли -->
+<div class="modal fade" id="addRoleModal" tabindex="-1" aria-labelledby="addRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addRoleModalLabel">Добавить новую роль</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="newRoleId" class="form-label">ID роли</label>
+                        <input type="number"
+                               class="form-control"
+                               id="newRoleId"
+                               name="roleId"
+                               required
+                               min="1">
+                        <div class="form-text">Уникальный числовой идентификатор роли</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="newRoleName" class="form-label">Наименование роли</label>
+                        <input type="text"
+                               class="form-control"
+                               id="newRoleName"
+                               name="name"
+                               required
+                               placeholder="Например: Администратор">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="newRoleDescription" class="form-label">Описание роли</label>
+                        <textarea class="form-control"
+                                  id="newRoleDescription"
+                                  name="description"
+                                  rows="3"
+                                  required
+                                  placeholder="Подробное описание роли и ее прав"></textarea>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary add-role-btn" id="saveNewRoleBtn">Добавить роль</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Кнопка для открытия модального окна -->
+<button type="button" class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addRoleModal">
+    <i class="bi bi-plus-circle"></i> Добавить роль
+</button>
 
 <div class="card shadow-sm">
     <div class="card-body p-0">

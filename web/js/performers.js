@@ -36,6 +36,8 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
+
+
     });
 
     function enablePerformersEditMode(row) {
@@ -217,9 +219,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     }
 
-    function handleSuccessUpdate(row, result, selectedFormsText, selectedFgwText, performerId, idRoleAForms, idRoleAFGW) {
+
+
+
+
+    function handleSuccessUpdate(row, result, roleId, name, description) {
         // 1. Обновление оригинальных данных
-        originalData.set(performerId, {
+        originalData.set(roleId, {
+
             formsValue: idRoleAForms.toString(),
             fgwValue: idRoleAFGW.toString(),
             formsText: selectedFormsText,

@@ -35,7 +35,7 @@ func NewRoleHandlerHTML(roleService service.RoleUseCase, logger *common.Logger, 
 
 func (r *RoleHandlerHTML) ServerHTTPHTMLRouter(mux *http.ServeMux) {
 	mux.HandleFunc("/admin/roles", r.authMiddleware.RequireAuth(r.authMiddleware.RequireRole([]int{3}, r.AllRoleHTML)))
-	//mux.HandleFunc("/admin/roles/add", r.AddRoleHTML)
+	mux.HandleFunc("/admin/roles/add", r.authMiddleware.RequireAuth(r.authMiddleware.RequireRole([]int{3}, r.HandleJSONAdd)))
 	mux.HandleFunc("/admin/roles/upd", r.authMiddleware.RequireAuth(r.authMiddleware.RequireRole([]int{3}, r.HandleJSONUpdate)))
 }
 
@@ -95,45 +95,81 @@ func (r *RoleHandlerHTML) AllRoleHTML(w http.ResponseWriter, req *http.Request) 
 	r.renderPages(w, tmplAdminHTML, data, req, tmplAdminRolesHTML, tmplAdminPerformersHTML)
 }
 
-func (r *RoleHandlerHTML) AddRoleHTML(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+func (r *RoleHandlerHTML) HandleJSONAdd(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	if req.Method != http.MethodPost {
-		http_err.SendErrorHTTP(w, http.StatusMethodNotAllowed, "", r.logg, req)
+		json_err.SendErrorResponse(w, http.StatusMethodNotAllowed, msg.H7004, "Method not allowed", req)
 
 		return
 	}
 
-	roleIdStr := req.FormValue("roleId")
-	nameStr := req.FormValue("name")
-	descStr := req.FormValue("description")
-	createdByStr := req.FormValue("createdBy")
+	var reqs struct {
+		RoleId      int    `json:"roleId"`
+		Name        string `json:"name"`
+		Description string `json:"description"`
+	}
 
-	if roleIdStr == "" || nameStr == "" || descStr == "" || createdByStr == "" {
-		r.renderErrorPage(w, http.StatusBadRequest, msg.E3214, req)
+	if err := json.NewDecoder(req.Body).Decode(&reqs); err != nil {
+		json_err.SendErrorResponse(w, http.StatusBadRequest, msg.H7004, err.Error(), req)
 
 		return
 	}
 
-	roleId := convert.ConvStrToInt(roleIdStr)
-	createdBy := convert.ConvStrToInt(createdByStr)
+	exists, err := r.roleService.ExistRole(req.Context(), reqs.RoleId)
+	if err != nil {
+		json_err.SendErrorResponse(w, http.StatusInternalServerError, msg.H7001, err.Error(), req)
+
+		return
+	}
+
+	if exists {
+		json_err.SendErrorResponse(w, http.StatusNotFound, msg.H7008, "", req)
+
+		return
+	}
+
+	if session, err := config.Store.Get(req, config.GetSessionName()); err == nil {
+		if id, ok := session.Values[config.SessionPerformerKey].(int); ok {
+			authPerformerId = id
+		}
+	}
 
 	role := &model.Role{
-		Id:   roleId,
-		Name: nameStr,
-		Desc: descStr,
+		Id:   reqs.RoleId,
+		Name: reqs.Name,
+		Desc: reqs.Description,
 		AuditRec: model.Audit{
-			CreatedBy: createdBy,
+			CreatedBy: authPerformerId,
 		},
 	}
 
 	if err := r.roleService.AddRole(req.Context(), role); err != nil {
-		http_err.SendErrorHTTP(w, http.StatusInternalServerError, err.Error(), r.logg, req)
+		json_err.SendErrorResponse(w, http.StatusInternalServerError, msg.H7001, err.Error(), req)
 
 		return
 	}
 
-	http.Redirect(w, req, "/admin/roles", http.StatusSeeOther)
+	createdRole, err := r.roleService.FindRoleById(req.Context(), reqs.RoleId)
+	if err != nil {
+		json_err.SendErrorResponse(w, http.StatusInternalServerError, msg.H7001, err.Error(), req)
+		return
+	}
+
+	response := map[string]interface{}{
+		"success":     true,
+		"message":     "Роль успешно добавлена",
+		"roleId":      reqs.RoleId,
+		"name":        reqs.Name,
+		"description": reqs.Description,
+		"createdAt":   convert.FormatDateTime(createdRole.AuditRec.CreatedAt),
+		"createdBy":   createdRole.AuditRec.CreatedBy,
+		"updatedAt":   convert.FormatDateTime(createdRole.AuditRec.UpdatedAt),
+		"updatedBy":   createdRole.AuditRec.UpdatedBy,
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json_api.WriteJSON(w, response, req)
 }
 
 func (r *RoleHandlerHTML) HandleJSONUpdate(w http.ResponseWriter, req *http.Request) {
