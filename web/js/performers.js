@@ -19,8 +19,8 @@ const PERFORMERS_CONFIG = {
         SEARCH_INPUT: '#searchInput',
         SEARCH_FORM: '#searchForm',
         PERFORMER_ROW: 'tr[data-id]',
-        FORM_SELECT: '.role-forms-select',
-        FGW_SELECT: '.role-fgw-select',
+        FORM_SELECT: 'select.role-forms-select, .role-forms-select',
+        FGW_SELECT: 'select.role-fgw-select, .role-fgw-select',
         EDIT_BUTTONS: '.edit-buttons'
     },
     CLASSES: {
@@ -49,7 +49,7 @@ class PerformersStateManager {
     }
 
     saveOriginal(performerId, data) {
-        this.originalData.set(performerId, { ...data });
+        this.originalData.set(performerId, {...data});
     }
 
     getOriginal(performerId) {
@@ -57,7 +57,7 @@ class PerformersStateManager {
     }
 
     updateOriginal(performerId, data) {
-        this.originalData.set(performerId, { ...data });
+        this.originalData.set(performerId, {...data});
     }
 
     hasOriginal(performerId) {
@@ -79,6 +79,11 @@ class PerformerRowManager {
         const performerId = this.getPerformerId(row);
         const selects = this.getSelects(row);
 
+        if (!selects || !selects.form || !selects.fgw) {
+            console.error('Select elements not found in row:', row);
+            return false;
+        }
+
         // Устанавливаем значения
         selects.form.value = originalData.formsValue;
         selects.fgw.value = originalData.fgwValue;
@@ -93,6 +98,7 @@ class PerformerRowManager {
 
         // Фокус на первом select
         selects.form.focus();
+        return true;
     }
 
     static disableEditMode(row) {
@@ -101,10 +107,10 @@ class PerformerRowManager {
         const originalFgwValue = row.dataset.originalFgwValue;
 
         // Восстанавливаем значения
-        if (originalFormsValue && selects.form) {
+        if (originalFormsValue && selects && selects.form) {
             selects.form.value = originalFormsValue;
         }
-        if (originalFgwValue && selects.fgw) {
+        if (originalFgwValue && selects && selects.fgw) {
             selects.fgw.value = originalFgwValue;
         }
 
@@ -118,34 +124,44 @@ class PerformerRowManager {
         const editBtn = row.querySelector(PERFORMERS_CONFIG.SELECTORS.EDIT_BTN);
         const editButtons = row.querySelector(PERFORMERS_CONFIG.SELECTORS.EDIT_BUTTONS);
 
-        // Переключаем классы и стили
         row.classList.toggle('editing', isEditMode);
         row.style.backgroundColor = isEditMode ? PERFORMERS_CONFIG.UI.ROW_BG_EDITING : '';
 
         // Переключаем видимость элементов
         viewModeElements.forEach(el => {
-            el.style.display = isEditMode ? 'none' : 'table-cell';
+            el.style.display = isEditMode ? 'none' : '';
         });
 
         editModeElements.forEach(el => {
-            el.style.display = isEditMode ? 'table-cell' : 'none';
+            el.style.display = isEditMode ? '' : 'none';
         });
 
-        if (editBtn) editBtn.style.display = isEditMode ? 'none' : 'block';
+        if (editBtn) editBtn.style.display = isEditMode ? 'none' : '';
         if (editButtons) editButtons.style.display = isEditMode ? 'flex' : 'none';
     }
 
     static getPerformerId(row) {
-        return parseInt(row.getAttribute('data-id'), 10);
+        const id = row.getAttribute('data-id');
+        if (!id) {
+            console.error('data-id attribute not found in row:', row);
+            return null;
+        }
+        return parseInt(id, 10);
     }
 
     static getSelects(row) {
+        if (!row) {
+            console.error('Row is null in getSelects');
+            return null;
+        }
+
         const formSelect = row.querySelector(PERFORMERS_CONFIG.SELECTORS.FORM_SELECT);
         const fgwSelect = row.querySelector(PERFORMERS_CONFIG.SELECTORS.FGW_SELECT);
 
         // Проверяем, что элементы существуют
         if (!formSelect || !fgwSelect) {
-            console.error('Select elements not found in row:', row);
+            console.warn('Select elements not found in row. Form:', formSelect, 'FGW:', fgwSelect);
+            console.warn('Row HTML:', row.outerHTML);
             return null;
         }
 
@@ -156,7 +172,8 @@ class PerformerRowManager {
     }
 
     static getSelectedOptionText(select) {
-        return select?.options[select.selectedIndex]?.text?.trim() || '';
+        if (!select) return '';
+        return select.options[select.selectedIndex]?.text?.trim() || '';
     }
 
     static updateRowData(row, data) {
@@ -309,7 +326,10 @@ class SearchManager {
     }
 
     init() {
-        if (!this.searchInput || !this.searchForm) return;
+        if (!this.searchInput || !this.searchForm) {
+            console.warn('Search elements not found');
+            return;
+        }
 
         this.searchInput.addEventListener('input', this.handleInput.bind(this));
         this.focusSearchInput();
@@ -384,6 +404,8 @@ class PerformersManager {
             const row = btn.closest(PERFORMERS_CONFIG.SELECTORS.PERFORMER_ROW);
             if (row) {
                 this.handleEditClick(row);
+            } else {
+                console.warn('Row not found for edit button');
             }
         }
 
@@ -413,11 +435,19 @@ class PerformersManager {
         }
 
         const performerId = PerformerRowManager.getPerformerId(row);
+        if (!performerId) {
+            console.error('Could not get performer ID from row:', row);
+            return;
+        }
 
         // Если оригинальные данные не сохранены - сохраняем их
         if (!this.stateManager.hasOriginal(performerId)) {
             const selects = PerformerRowManager.getSelects(row);
-            if (!selects) return;
+            if (!selects) {
+                console.error('Could not get selects for performer:', performerId);
+                PerformersNotificationManager.show('Ошибка: элементы формы не найдены', 'danger');
+                return;
+            }
 
             const originalData = {
                 formsValue: selects.form.getAttribute('data-original') || selects.form.value,
@@ -453,8 +483,14 @@ class PerformersManager {
 
         try {
             const performerId = PerformerRowManager.getPerformerId(row);
+            if (!performerId) {
+                throw new Error('Не удалось получить ID исполнителя');
+            }
+
             const selects = PerformerRowManager.getSelects(row);
-            if (!selects) return;
+            if (!selects) {
+                throw new Error('Элементы формы не найдены');
+            }
 
             // Получаем значения
             const idRoleAForms = parseInt(selects.form.value, 10);
@@ -468,6 +504,7 @@ class PerformersManager {
                 validation.errors.forEach(error => {
                     PerformersNotificationManager.show(error, 'warning');
                 });
+                PerformerRowManager.resetSaveButton(saveBtn);
                 return;
             }
 
@@ -492,7 +529,6 @@ class PerformersManager {
             console.error('Save error:', error);
             PerformersNotificationManager.show(`${PERFORMERS_CONFIG.MESSAGES.SAVE_ERROR}: ${error.message}`, 'danger');
             PerformerRowManager.resetSaveButton(saveBtn);
-            throw error;
         }
     }
 

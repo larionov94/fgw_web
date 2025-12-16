@@ -21,7 +21,10 @@ const CONFIG = {
         ADD_BTN: '.add-role-btn',
         DEL_BTN: '.del-btn',
         ROLE_ROW: 'tr[data-id]',
-        ADD_MODAL: '#addRoleModal'
+        ADD_MODAL: '#addRoleModal',
+        ROLES_TABLE: '#rolesTable',
+        ROLES_TABLE_BODY: '#rolesTable tbody',
+        ROLES_COUNT: '.roles-count'
     },
     CLASSES: {
         EDITING: 'editing',
@@ -29,15 +32,192 @@ const CONFIG = {
         EDIT_MODE: 'edit-mode',
         EDIT_BUTTONS: '.edit-buttons'
     },
-    STORAGE_KEYS: {
-        ORIGINAL_DATA: 'roleOriginalData'
-    },
     MESSAGES: {
         DELETE_CONFIRM: 'Вы уверены, что хотите удалить эту роль?',
         DELETE_SUCCESS: 'Роль успешно удалена',
         DELETE_ERROR: 'Ошибка при удалении роли'
     }
 };
+
+/**
+ * Класс для управления таблицей ролей
+ */
+class RolesTableManager {
+    /**
+     * Удаляет строку из таблицы с анимацией
+     * @param {HTMLElement} row - Строка для удаления
+     * @returns {Promise<void>}
+     */
+    static async removeRowWithAnimation(row) {
+        return new Promise(resolve => {
+            // Анимация удаления
+            row.style.transition = 'all 0.3s ease';
+            row.style.transform = 'translateX(-100%)';
+            row.style.opacity = '0';
+
+            // Ждем завершения анимации
+            setTimeout(() => {
+                row.remove();
+                this.updateRolesCount();
+                resolve();
+            }, 300);
+        });
+    }
+
+    /**
+     * Добавляет новую строку в таблицу
+     * @param {Object} roleData - Данные роли
+     */
+    static addNewRow(roleData) {
+        const tbody = document.querySelector(CONFIG.SELECTORS.ROLES_TABLE_BODY);
+        if (!tbody) return;
+
+        // Создаем HTML для новой строки
+        const newRowHtml = this.createRowHtml(roleData);
+
+        // Создаем временный элемент для вставки
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = newRowHtml;
+        const newRow = tempDiv.firstElementChild;
+
+        // Анимация появления
+        newRow.style.opacity = '0';
+        newRow.style.transform = 'translateY(-20px)';
+        tbody.prepend(newRow);
+
+        // Анимация
+        requestAnimationFrame(() => {
+            newRow.style.transition = 'all 0.3s ease';
+            newRow.style.opacity = '1';
+            newRow.style.transform = 'translateY(0)';
+        });
+
+        this.updateRolesCount();
+    }
+
+    /**
+     * Создает HTML для строки таблицы
+     * @param {Object} roleData - Данные роли
+     * @returns {string} HTML строка
+     */
+    static createRowHtml(roleData) {
+        return `
+            <tr id="role-${roleData.id}" data-id="${roleData.id}">
+                <!-- ИД (всегда в режиме просмотра) -->
+                <td class="fw-semibold">${roleData.id}</td>
+
+                <!-- Наименование - режим просмотра -->
+                <td class="view-mode forms-name">${this._escapeHtml(roleData.name)}</td>
+
+                <!-- Описание - режим просмотра -->
+                <td class="view-mode forms-desc">${this._escapeHtml(roleData.description)}</td>
+
+                <!-- Наименование - режим редактирования (скрыт) -->
+                <td class="edit-mode" style="display: none;">
+                    <label style="width: 75%">
+                        <input type="text"
+                               name="name"
+                               value="${this._escapeHtml(roleData.name)}"
+                               class="form-control form-control-sm"
+                               data-original="${this._escapeHtml(roleData.name)}"
+                               required>
+                    </label>
+                </td>
+
+                <!-- Описание - режим редактирования (скрыт) -->
+                <td class="edit-mode" style="display: none;">
+                    <label style="width: 95%">
+                        <input type="text"
+                               name="description"
+                               value="${this._escapeHtml(roleData.description)}"
+                               class="form-control form-control-sm"
+                               data-original="${this._escapeHtml(roleData.description)}"
+                               required>
+                    </label>
+                </td>
+
+                <!-- Дата создания -->
+                <td>${roleData.createdAt || ''}</td>
+
+                <!-- ТН создателя -->
+                <td>${roleData.createdBy || ''}</td>
+
+                <!-- Дата изменения -->
+                <td class="update-at">${roleData.updatedAt || ''}</td>
+
+                <!-- ТН редактора -->
+                <td class="update-by">${roleData.updatedBy || ''}</td>
+
+                <!-- Кнопки операций -->
+                <td>
+                    <div class="d-flex justify-content-center gap-2">
+                        <!-- Кнопка редактирования (отображается в view-mode) -->
+                        <button class="btn btn-sm btn-outline-primary edit-btn"
+                                title="Редактировать">
+                            <span>✏️</span>
+                        </button>
+
+                        <button class="btn btn-sm btn-outline-primary del-btn"
+                                title="Удалить">
+                            <span>🗑️</span>
+                        </button>
+
+                        <!-- Кнопки сохранения/отмены (скрыты в view-mode) -->
+                        <div class="edit-buttons" style="display: none;">
+                            <button class="btn btn-sm btn-success save-role-btn" title="Сохранить">
+                                <span>✓</span>
+                            </button>
+                            <button class="btn btn-sm btn-secondary cancel-btn" title="Отмена">
+                                <span>✗</span>
+                            </button>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+
+    /**
+     * Обновляет счетчик ролей
+     */
+    static updateRolesCount() {
+        const rows = document.querySelectorAll(CONFIG.SELECTORS.ROLE_ROW);
+        const countElement = document.querySelector(CONFIG.SELECTORS.ROLES_COUNT);
+
+        if (countElement) {
+            countElement.textContent = `Всего ролей: ${rows.length}`;
+        } else {
+            // Ищем элемент по тексту, если нет специального класса
+            const elements = document.querySelectorAll('p');
+            elements.forEach(el => {
+                if (el.textContent.includes('Всего ролей')) {
+                    el.textContent = `Всего ролей: ${rows.length}`;
+                }
+            });
+        }
+    }
+
+    /**
+     * Обновляет строку с данными
+     * @param {HTMLElement} row - Строка таблицы
+     * @param {Object} data - Новые данные
+     */
+    static updateRow(row, data) {
+        RoleRowManager.updateRowData(row, data);
+        this.updateRolesCount();
+    }
+
+    /**
+     * Экранирует HTML-сущности
+     * @param {string} text - Текст для экранирования
+     * @returns {string} Экранированный текст
+     */
+    static _escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+}
 
 /**
  * Класс для управления состояниями ролей
@@ -63,6 +243,10 @@ class RoleStateManager {
         return this.originalData.has(roleId);
     }
 
+    removeOriginal(roleId) {
+        this.originalData.delete(roleId);
+    }
+
     clearTemporary(row) {
         ['originalName', 'originalDesc', 'roleId'].forEach(key => {
             delete row.dataset[key];
@@ -75,23 +259,16 @@ class RoleStateManager {
  */
 class RoleRowManager {
     static enableEditMode(row, originalData) {
-        // Сохраняем оригинальные значения
         const roleId = this.getRoleId(row);
-
-        // Устанавливаем значения
         const inputs = this.getInputs(row);
         inputs.name.value = originalData.name;
         inputs.description.value = originalData.description;
 
-        // Сохраняем для возможности отмены
         row.dataset.originalName = originalData.name;
         row.dataset.originalDesc = originalData.description;
         row.dataset.roleId = roleId.toString();
 
-        // Переключаем UI состояния
         this.toggleEditModeUI(row, true);
-
-        // Фокус
         inputs.name.focus();
     }
 
@@ -100,7 +277,6 @@ class RoleRowManager {
         const originalName = row.dataset.originalName;
         const originalDesc = row.dataset.originalDesc;
 
-        // Восстанавливаем значения
         if (originalName && inputs.name) {
             inputs.name.value = originalName;
         }
@@ -108,22 +284,18 @@ class RoleRowManager {
             inputs.description.value = originalDesc;
         }
 
-        // Переключаем UI состояния
         this.toggleEditModeUI(row, false);
     }
 
     static toggleEditModeUI(row, isEditMode) {
-        // Управляем видимостью элементов
         const viewModeElements = row.querySelectorAll(CONFIG.CLASSES.VIEW_MODE);
         const editModeElements = row.querySelectorAll(CONFIG.CLASSES.EDIT_MODE);
         const editBtn = row.querySelector(CONFIG.SELECTORS.EDIT_BTN);
         const editButtons = row.querySelector(CONFIG.CLASSES.EDIT_BUTTONS);
 
-        // Переключаем классы и стили
         row.classList.toggle(CONFIG.CLASSES.EDITING, isEditMode);
         row.style.backgroundColor = isEditMode ? '#f8f9fa' : '';
 
-        // Переключаем видимость
         viewModeElements.forEach(el => {
             el.style.display = isEditMode ? 'none' : 'table-cell';
         });
@@ -132,10 +304,8 @@ class RoleRowManager {
             el.style.display = isEditMode ? 'table-cell' : 'none';
         });
 
-        editBtn.style.display = isEditMode ? 'none' : 'block';
-        if (editButtons) {
-            editButtons.style.display = isEditMode ? 'flex' : 'none';
-        }
+        if (editBtn) editBtn.style.display = isEditMode ? 'none' : 'block';
+        if (editButtons) editButtons.style.display = isEditMode ? 'flex' : 'none';
     }
 
     static getRoleId(row) {
@@ -150,7 +320,6 @@ class RoleRowManager {
     }
 
     static updateRowData(row, data) {
-        // Обновляем текстовые представления
         const nameElement = row.querySelector('.forms-name');
         const descElement = row.querySelector('.forms-desc');
         const updateAtElement = row.querySelector('.update-at');
@@ -161,7 +330,6 @@ class RoleRowManager {
         if (updateAtElement) updateAtElement.textContent = data.updatedAt || '';
         if (updateByElement) updateByElement.textContent = data.updatedBy || '';
 
-        // Обновляем инпуты
         const inputs = this.getInputs(row);
         if (inputs.name) {
             inputs.name.value = data.name;
@@ -212,49 +380,14 @@ class RoleAPI {
     }
 
     static async delRole(data) {
-        try {
-            const response = await fetch(`${CONFIG.API.BASE_URL}${CONFIG.API.ENDPOINTS.DELETE}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    roleId: data.roleId
-                })
-            });
-
-            if (!response.ok) {
-                await this._handleError(response);
-            }
-
-            return await response.json();
-        } catch (error) {
-            console.error('Delete API error:', error);
-            throw error;
-        }
+        return this._makeRequest(CONFIG.API.ENDPOINTS.DELETE, {
+            roleId: data.roleId
+        }, 'DELETE');
     }
 
-    static async _makeRequest(endpoint, data) {
+    static async _makeRequest(endpoint, data, method = 'POST') {
         const response = await fetch(`${CONFIG.API.BASE_URL}${endpoint}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(data)
-        });
-
-        if (!response.ok) {
-            await this._handleError(response);
-        }
-
-        return await response.json();
-    }
-
-    static async _makeRequestDel(endpoint, data) {
-        const response = await fetch(`${CONFIG.API.BASE_URL}${endpoint}`, {
-            method: 'DELETE',
+            method: method,
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
@@ -286,16 +419,11 @@ class RoleAPI {
  */
 class NotificationManager {
     static show(message, type = 'info') {
-        // Удаляем существующие уведомления
         this.clear();
 
-        // Создаем новое уведомление
         const notification = this._createNotificationElement(message, type);
-
-        // Добавляем на страницу
         document.body.appendChild(notification);
 
-        // Автоматическое скрытие
         this._setupAutoDismiss(notification);
     }
 
@@ -393,10 +521,8 @@ class RoleManager {
     }
 
     bindEvents() {
-        // Используем делегирование событий для лучшей производительности
         document.addEventListener('click', this.handleClick.bind(this));
 
-        // Обработка модального окна
         const addModal = document.querySelector(CONFIG.SELECTORS.ADD_MODAL);
         if (addModal) {
             addModal.addEventListener('hidden.bs.modal', this.clearAddForm.bind(this));
@@ -404,34 +530,25 @@ class RoleManager {
     }
 
     handleClick(event) {
-        // Редактирование
         if (event.target.closest(CONFIG.SELECTORS.EDIT_BTN)) {
             const btn = event.target.closest(CONFIG.SELECTORS.EDIT_BTN);
             const row = btn.closest(CONFIG.SELECTORS.ROLE_ROW);
             this.handleEditClick(row);
         }
-
-        // Отмена редактирования
         else if (event.target.closest(CONFIG.SELECTORS.CANCEL_BTN)) {
             const btn = event.target.closest(CONFIG.SELECTORS.CANCEL_BTN);
             const row = btn.closest(CONFIG.SELECTORS.ROLE_ROW);
             this.handleCancelClick(row);
         }
-
-        // Сохранение
         else if (event.target.closest(CONFIG.SELECTORS.SAVE_BTN)) {
             const btn = event.target.closest(CONFIG.SELECTORS.SAVE_BTN);
             const row = btn.closest(CONFIG.SELECTORS.ROLE_ROW);
             this.handleSaveClick(row);
         }
-
-        // Добавление
         else if (event.target.closest(CONFIG.SELECTORS.ADD_BTN)) {
             const btn = event.target.closest(CONFIG.SELECTORS.ADD_BTN);
             this.handleAddClick(btn);
         }
-
-        // Удаление
         else if (event.target.closest(CONFIG.SELECTORS.DEL_BTN)) {
             const btn = event.target.closest(CONFIG.SELECTORS.DEL_BTN);
             const row = btn.closest(CONFIG.SELECTORS.ROLE_ROW);
@@ -442,7 +559,6 @@ class RoleManager {
     handleEditClick(row) {
         const roleId = RoleRowManager.getRoleId(row);
 
-        // Если оригинальные данные не сохранены - сохраняем их
         if (!this.stateManager.hasOriginal(roleId)) {
             const inputs = RoleRowManager.getInputs(row);
             const originalData = {
@@ -460,7 +576,6 @@ class RoleManager {
         const roleId = RoleRowManager.getRoleId(row);
         const roleName = row.querySelector('.forms-name')?.textContent || '';
 
-        // Подтверждение удаления
         if (!confirm(`${CONFIG.MESSAGES.DELETE_CONFIRM}\nРоль: ${roleName} (ID: ${roleId})`)) {
             return;
         }
@@ -469,23 +584,19 @@ class RoleManager {
         const originalContent = deleteBtn.innerHTML;
 
         try {
-            // Показываем индикатор загрузки
             deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
             deleteBtn.disabled = true;
 
-            // Отправляем запрос на удаление
             const result = await RoleAPI.delRole({ roleId });
 
             if (result.success) {
-                // Удаляем строку из таблицы
-                row.remove();
+                // Удаляем строку с анимацией вместо перезагрузки
+                await RolesTableManager.removeRowWithAnimation(row);
 
                 // Очищаем сохраненные данные
-                this.stateManager.originalData.delete(roleId);
+                this.stateManager.removeOriginal(roleId);
 
-                // Показываем уведомление
                 NotificationManager.show(CONFIG.MESSAGES.DELETE_SUCCESS, 'success');
-                window.location.reload();
             } else {
                 NotificationManager.show(result.message || CONFIG.MESSAGES.DELETE_ERROR, 'danger');
                 this.resetDeleteButton(deleteBtn, originalContent);
@@ -510,7 +621,6 @@ class RoleManager {
     async handleSaveClick(row) {
         const saveBtn = row.querySelector(CONFIG.SELECTORS.SAVE_BTN);
 
-        // Предотвращение двойных кликов
         if (saveBtn.disabled) return;
 
         RoleRowManager.setLoadingState(saveBtn, true);
@@ -521,7 +631,6 @@ class RoleManager {
             const name = inputs.name.value.trim();
             const description = inputs.description.value.trim();
 
-            // Валидация
             const validation = RoleValidator.validateEditForm(name, description);
             if (!validation.isValid) {
                 validation.errors.forEach(error => {
@@ -530,14 +639,12 @@ class RoleManager {
                 return;
             }
 
-            // Отправка на сервер
             const result = await RoleAPI.updateRole({
                 roleId,
                 name,
                 description
             });
 
-            // Обработка успешного ответа
             this.handleUpdateSuccess(row, result, roleId, name, description);
 
         } catch (error) {
@@ -556,12 +663,10 @@ class RoleManager {
         button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Добавление...';
 
         try {
-            // Получение данных из формы
             const roleId = parseInt(document.getElementById('newRoleId')?.value || 0, 10);
             const name = document.getElementById('newRoleName')?.value.trim() || '';
             const description = document.getElementById('newRoleDescription')?.value.trim() || '';
 
-            // Валидация
             const validation = RoleValidator.validateAddForm(roleId, name, description);
             if (!validation.isValid) {
                 validation.errors.forEach(error => {
@@ -570,14 +675,12 @@ class RoleManager {
                 return;
             }
 
-            // Отправка на сервер
             const result = await RoleAPI.addRole({
                 roleId,
                 name,
                 description
             });
 
-            // Обработка успешного ответа
             this.handleAddSuccess(result, button, originalText);
 
         } catch (error) {
@@ -589,39 +692,39 @@ class RoleManager {
     }
 
     handleUpdateSuccess(row, result, roleId, name, description) {
-        // Обновляем оригинальные данные
         this.stateManager.updateOriginal(roleId, {name, description});
 
-        // Обновляем UI
-        RoleRowManager.updateRowData(row, {
+        // Обновляем данные в таблице
+        RolesTableManager.updateRow(row, {
             name,
             description,
             updatedAt: result.updatedAt,
             updatedBy: result.updatedBy
         });
 
-        // Выходим из режима редактирования
         RoleRowManager.disableEditMode(row);
         this.stateManager.clearTemporary(row);
 
-        // Восстанавливаем кнопку
         const saveBtn = row.querySelector(CONFIG.SELECTORS.SAVE_BTN);
         RoleRowManager.resetSaveButton(saveBtn);
 
-        // Уведомление
         NotificationManager.show(result.message || 'Роль успешно обновлена', 'success');
     }
 
     handleAddSuccess(result, button, originalText) {
         if (result.success) {
-            // Закрываем модальное окно
             const modal = bootstrap.Modal.getInstance(document.querySelector(CONFIG.SELECTORS.ADD_MODAL));
             if (modal) {
                 modal.hide();
             }
 
-            // Обновляем таблицу (если необходимо)
-            this.refreshTable();
+            // Добавляем новую строку в таблицу динамически
+            if (result.role) {
+                RolesTableManager.addNewRow(result.role);
+            } else {
+                // Если сервер не вернул данные роли, перезагружаем таблицу через AJAX
+                this.refreshTable();
+            }
 
             NotificationManager.show(result.message || 'Роль успешно добавлена', 'success');
         } else {
@@ -643,15 +746,39 @@ class RoleManager {
         }
     }
 
-    refreshTable() {
-        window.location.reload()
-        // Здесь может быть логика обновления таблицы
-        // Например, через window.location.reload() или обновление через AJAX
-        console.log('Table refresh logic here');
+    async refreshTable() {
+        try {
+            // AJAX запрос для обновления таблицы
+            const response = await fetch('/admin/roles', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (response.ok) {
+                const html = await response.text();
+                // Парсим HTML и обновляем только таблицу
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newTable = doc.querySelector(CONFIG.SELECTORS.ROLES_TABLE);
+
+                if (newTable) {
+                    const currentTable = document.querySelector(CONFIG.SELECTORS.ROLES_TABLE);
+                    currentTable.parentNode.replaceChild(newTable, currentTable);
+
+                    // Обновляем счетчик
+                    RolesTableManager.updateRolesCount();
+                }
+            }
+        } catch (error) {
+            console.error('Refresh table error:', error);
+            // В крайнем случае - обычная перезагрузка
+            window.location.reload();
+        }
     }
 }
 
-// Инициализация при загрузке страницы
+// Инициализация
 document.addEventListener('DOMContentLoaded', () => {
     try {
         window.roleManager = new RoleManager();
