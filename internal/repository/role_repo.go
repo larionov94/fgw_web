@@ -26,6 +26,7 @@ type RoleRepository interface {
 	UpdById(ctx context.Context, id int, role *model.Role) error
 	FindById(ctx context.Context, id int) (*model.Role, error)
 	ExistById(ctx context.Context, id int) (bool, error)
+	DelById(ctx context.Context, id int) error
 }
 
 func (r *RoleRepo) All(ctx context.Context) ([]*model.Role, error) {
@@ -128,4 +129,14 @@ func (r *RoleRepo) ExistById(ctx context.Context, id int) (bool, error) {
 	}
 
 	return exists, nil
+}
+
+func (r *RoleRepo) DelById(ctx context.Context, id int) error {
+	if _, err := r.mssql.ExecContext(ctx, FGWsvRoleDelByIdQuery, id); err != nil {
+		r.logg.LogE(msg.E3218, err)
+
+		return err
+	}
+
+	return nil
 }

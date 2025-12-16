@@ -19,4 +19,5 @@ const (
 	FGWsvRoleFindByIdQuery   = "exec dbo.svRoleFindById ?;"         // ХП ищет роль.
 	FGWsvRoleUpdByIdQuery    = "exec dbo.svRoleUpdById ?, ?, ?, ?;" // ХП обновляет роль по ид.
 	FGWsvRoleExistsByIdQuery = "exec dbo.svRoleExistsById ?;"       // ХП проверяет, существует ли роль.
+	FGWsvRoleDelByIdQuery    = "exec dbo.svRoleDelById ?;"          // ХП проверяет, существует ли роль.
 )

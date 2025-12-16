@@ -37,6 +37,7 @@ func (r *RoleHandlerHTML) ServerHTTPHTMLRouter(mux *http.ServeMux) {
 	mux.HandleFunc("/admin/roles", r.authMiddleware.RequireAuth(r.authMiddleware.RequireRole([]int{3}, r.AllRoleHTML)))
 	mux.HandleFunc("/admin/roles/add", r.authMiddleware.RequireAuth(r.authMiddleware.RequireRole([]int{3}, r.HandleJSONAdd)))
 	mux.HandleFunc("/admin/roles/upd", r.authMiddleware.RequireAuth(r.authMiddleware.RequireRole([]int{3}, r.HandleJSONUpdate)))
+	mux.HandleFunc("/admin/roles/del", r.authMiddleware.RequireAuth(r.authMiddleware.RequireRole([]int{3}, r.HandleJSONDelete)))
 }
 
 func (r *RoleHandlerHTML) AllRoleHTML(w http.ResponseWriter, req *http.Request) {
@@ -227,6 +228,48 @@ func (r *RoleHandlerHTML) HandleJSONUpdate(w http.ResponseWriter, req *http.Requ
 		"roleId":    reqs.RoleId,
 		"updatedAt": time.Now().Format("02.01.2006 15:04:05"),
 		"updatedBy": authPerformerId,
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json_api.WriteJSON(w, response, req)
+}
+
+func (r *RoleHandlerHTML) HandleJSONDelete(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	var reqs struct {
+		RoleId int `json:"roleId"`
+	}
+
+	if err := json.NewDecoder(req.Body).Decode(&reqs); err != nil {
+		json_err.SendErrorResponse(w, http.StatusBadRequest, msg.H7004, err.Error(), req)
+
+		return
+	}
+
+	exists, err := r.roleService.ExistRole(req.Context(), reqs.RoleId)
+	if err != nil {
+		json_err.SendErrorResponse(w, http.StatusInternalServerError, msg.H7001, err.Error(), req)
+
+		return
+	}
+
+	if !exists {
+		json_err.SendErrorResponse(w, http.StatusNotFound, msg.H7008, "", req)
+
+		return
+	}
+
+	if err = r.roleService.DelRoleById(req.Context(), reqs.RoleId); err != nil {
+		json_err.SendErrorResponse(w, http.StatusInternalServerError, msg.H7001, err.Error(), req)
+
+		return
+	}
+
+	response := map[string]interface{}{
+		"success": true,
+		"message": "Роль успешна обновлена",
+		"roleId":  reqs.RoleId,
 	}
 
 	w.WriteHeader(http.StatusOK)
