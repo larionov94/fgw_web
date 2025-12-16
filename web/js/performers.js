@@ -1,275 +1,264 @@
-document.addEventListener('DOMContentLoaded', function () {
-    // 1. Хранилище для оригинальных значений
-    const originalData = new Map();
+/**
+ * Performers Management Module
+ * @module PerformersManager
+ * @description Управление исполнителями с поддержкой CRUD операций и поиска
+ */
 
-    // 2. Обработчик кнопки редактирования
-    document.addEventListener('click', function (e) {
-        if (e.target.closest('.edit-btn')) {
-            const btn = e.target.closest('.edit-btn');
-            const row = btn.closest('tr');
-
-            enablePerformersEditMode(row);
+// Конфигурация модуля
+const PERFORMERS_CONFIG = {
+    API: {
+        BASE_URL: '/admin/performers',
+        ENDPOINTS: {
+            UPDATE: '/upd'
         }
+    },
+    SELECTORS: {
+        EDIT_BTN: '.edit-btn',
+        CANCEL_BTN: '.cancel-btn',
+        SAVE_BTN: '.save-btn',
+        SEARCH_INPUT: '#searchInput',
+        SEARCH_FORM: '#searchForm',
+        PERFORMER_ROW: 'tr[data-id]',
+        FORM_SELECT: '.role-forms-select',
+        FGW_SELECT: '.role-fgw-select',
+        EDIT_BUTTONS: '.edit-buttons'
+    },
+    CLASSES: {
+        EDITING: 'editing',
+        VIEW_MODE: '.view-mode',
+        EDIT_MODE: '.edit-mode'
+    },
+    UI: {
+        DEBOUNCE_DELAY: 800,
+        NOTIFICATION_TIMEOUT: 5000,
+        ROW_BG_EDITING: '#f8f9fa'
+    },
+    MESSAGES: {
+        SAVE_SUCCESS: 'Изменения успешно сохранены',
+        SAVE_ERROR: 'Ошибка при сохранении',
+        SEARCH_ERROR: 'Ошибка при поиске'
+    }
+};
 
-        if (e.target.closest('.cancel-btn')) {
-            const btn = e.target.closest('.cancel-btn');
-            const row = btn.closest('tr')
-
-            disablePerformersEditMode(row);
-        }
-
-        if (e.target.closest('.save-btn')) {
-            const btn = e.target.closest('.save-btn');
-            const row = btn.closest('tr');
-
-            // Сохраняем изменения и игнорируем повторные клики
-            if (btn.disabled) return;
-
-            saveChanges(row).catch(error => {
-                console.error('Save error:', error);
-                showPerformersNotification('Ошибка при сохранении', 'danger');
-
-                // Восстанавливаем кнопку при ошибке
-                const saveBtn = row.querySelector('.save-btn');
-                saveBtn.innerHTML = '<span>✓</span>';
-                saveBtn.disabled = false;
-            });
-        }
-
-    });
-
-    function enablePerformersEditMode(row) {
-        // 1. Получаем Id из data-id атрибута строки
-        const performerIdStr = row.getAttribute('data-id'); // {{ .Obj }}
-        const performerId = parseInt(performerIdStr, 10);
-
-        // 2. Получаем элементы select
-        const formSelect = row.querySelector('.role-forms-select');
-        const fgwSelect = row.querySelector('.role-fgw-select');
-
-        // 3. Сохраняем оригинальные значения с сервера
-        if (!originalData.has(performerId)) {
-            // 3.1. Берем значение из атрибутов select (они содержать оригинальные значения)
-            const originalFormValue = formSelect.getAttribute('data-original') || formSelect.value;
-            const originalFgwValue = fgwSelect.getAttribute('data-original') || fgwSelect.value;
-
-            let originalFormText = '';
-            let originalFgwText = ''
-
-            for (let option of formSelect.options) {
-                if (option.value === originalFormValue) {
-                    originalFormText = option.text.trim()
-                    break;
-                }
-            }
-
-            for (let option of fgwSelect.options) {
-                if (option.value === originalFgwValue) {
-                    originalFgwText = option.text.trim()
-                    break;
-                }
-            }
-
-            originalData.set(performerId, {
-                formsValue: originalFormValue,
-                fgwValue: originalFgwValue,
-                formText: originalFormText,
-                fgwText: originalFgwText
-            });
-        }
-
-        // 4. Получаем сохраненные оригинальные значения
-        const original = originalData.get(performerId);
-
-        // 5. Устанавливаем текущее значение в select
-        formSelect.value = original.formsValue;
-        fgwSelect.value = original.fgwValue;
-
-        // 6. Сохраняем текущие значения для возможности отмены
-        row.dataset.originalFormsValue = original.formsValue;
-        row.dataset.originalFgwValue = original.fgwValue;
-        row.dataset.performerId = performerId.toString();
-
-        // 7. Показываем поля редактирования
-        row.querySelectorAll('.edit-mode').forEach(el => {
-            el.style.display = 'table-cell';
-        });
-
-        // 8. Скрываем поля просмотра
-        row.querySelectorAll('.view-mode').forEach(el => {
-            el.style.display = 'none';
-        });
-
-        // 9. Показываем кнопки сохранения/отмены
-        row.querySelector('.edit-btn').style.display = 'none';
-        row.querySelector('.edit-buttons').style.display = 'flex';
-
-        // 10. Добавляем визуальные индикаторы
-        row.classList.add('editing');
-        row.style.backgroundColor = '#f8f9fa';
+/**
+ * Класс для управления состояниями исполнителей
+ */
+class PerformersStateManager {
+    constructor() {
+        this.originalData = new Map();
     }
 
-    function disablePerformersEditMode(row) {
-        // 1. Получаем сохраненные значения для восстановления
+    saveOriginal(performerId, data) {
+        this.originalData.set(performerId, { ...data });
+    }
+
+    getOriginal(performerId) {
+        return this.originalData.get(performerId);
+    }
+
+    updateOriginal(performerId, data) {
+        this.originalData.set(performerId, { ...data });
+    }
+
+    hasOriginal(performerId) {
+        return this.originalData.has(performerId);
+    }
+
+    clearTemporaryData(row) {
+        ['originalFormsValue', 'originalFgwValue', 'performerId'].forEach(key => {
+            delete row.dataset[key];
+        });
+    }
+}
+
+/**
+ * Класс для управления UI состоянием строки исполнителя
+ */
+class PerformerRowManager {
+    static enableEditMode(row, originalData) {
+        const performerId = this.getPerformerId(row);
+        const selects = this.getSelects(row);
+
+        // Устанавливаем значения
+        selects.form.value = originalData.formsValue;
+        selects.fgw.value = originalData.fgwValue;
+
+        // Сохраняем для возможности отмены
+        row.dataset.originalFormsValue = originalData.formsValue;
+        row.dataset.originalFgwValue = originalData.fgwValue;
+        row.dataset.performerId = performerId.toString();
+
+        // Переключаем UI
+        this.toggleEditModeUI(row, true);
+
+        // Фокус на первом select
+        selects.form.focus();
+    }
+
+    static disableEditMode(row) {
+        const selects = this.getSelects(row);
         const originalFormsValue = row.dataset.originalFormsValue;
         const originalFgwValue = row.dataset.originalFgwValue;
 
-        const formSelect = row.querySelector('.role-forms-select');
-        const fgwSelect = row.querySelector('.role-fgw-select');
-
-        // 2. Восстанавливаем значение в select
-        if (originalFormsValue && formSelect) {
-            formSelect.value = originalFormsValue;
+        // Восстанавливаем значения
+        if (originalFormsValue && selects.form) {
+            selects.form.value = originalFormsValue;
+        }
+        if (originalFgwValue && selects.fgw) {
+            selects.fgw.value = originalFgwValue;
         }
 
-        if (originalFgwValue && fgwSelect) {
-            fgwSelect.value = originalFgwValue;
-        }
-
-        // 3. Скрываем поля редактирования
-        row.querySelectorAll('.edit-mode').forEach(el => {
-            el.style.display = 'none';
-        });
-
-        // 4. Показываем поля просмотра
-        row.querySelectorAll('.view-mode').forEach(el => {
-            el.style.display = 'table-cell';
-        });
-
-        // 5. Показываем кнопку редактирования
-        row.querySelector('.edit-btn').style.display = 'block';
-        row.querySelector('.edit-buttons').style.display = 'none';
-
-        // 6. Убираем визуальные индикаторы
-        row.classList.remove('editing');
-        row.style.backgroundColor = '';
-
-        // Очищаем временные data-атрибуты
-        delete row.dataset.originalFormsValue;
-        delete row.dataset.originalFgwValue;
-        delete row.dataset.performerId;
+        // Переключаем UI
+        this.toggleEditModeUI(row, false);
     }
 
-    async function saveChanges(row) {
-        // 1. Получаем Id из data-id атрибута строки
-        const performerIdStr = row.getAttribute('data-id'); // {{ .Obj }}
-        const performerId = parseInt(performerIdStr, 10);
+    static toggleEditModeUI(row, isEditMode) {
+        const viewModeElements = row.querySelectorAll(PERFORMERS_CONFIG.CLASSES.VIEW_MODE);
+        const editModeElements = row.querySelectorAll(PERFORMERS_CONFIG.CLASSES.EDIT_MODE);
+        const editBtn = row.querySelector(PERFORMERS_CONFIG.SELECTORS.EDIT_BTN);
+        const editButtons = row.querySelector(PERFORMERS_CONFIG.SELECTORS.EDIT_BUTTONS);
 
-        // 2. Получаем элементы select
-        const formSelect = row.querySelector('.role-forms-select');
-        const fgwSelect = row.querySelector('.role-fgw-select');
+        // Переключаем классы и стили
+        row.classList.toggle('editing', isEditMode);
+        row.style.backgroundColor = isEditMode ? PERFORMERS_CONFIG.UI.ROW_BG_EDITING : '';
 
-        // 3. Получаем текстовые значения выбранных опций
-        const selectedFormsText = formSelect.options[formSelect.selectedIndex].text;
-        const selectedFgwText = fgwSelect.options[fgwSelect.selectedIndex].text;
-
-        // 4. Преобразуем значения в числа
-        const idRoleAForms = parseInt(formSelect.value, 10);
-        const idRoleAFGW = parseInt(fgwSelect.value, 10);
-
-        // 5. Показываем индикатор загрузки
-        const saveBtn = row.querySelector('.save-btn');
-        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
-        saveBtn.disabled = true;
-
-        try {
-            // 6. Отправляем запрос через Fetch API
-            const response = await fetch('/admin/performers/upd', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    performerId: performerId,
-                    idRoleAForms: idRoleAForms,
-                    idRoleAFGW: idRoleAFGW
-                })
-            });
-
-            // 7. Проверяем статус ответа
-            if (!response.ok) {
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                    const result = await response.json();
-                    new Error(result.error || `HTTP ${response.status}`);
-                } else {
-                    new Error(`HTTP ${response.status}`);
-                }
-            }
-
-            // 9. Парсим JSON ответ
-            const result = await response.json();
-
-            // 10. Успешное обновление
-            handleSuccessUpdate(row, result, selectedFormsText, selectedFgwText, performerId, idRoleAForms, idRoleAFGW);
-        } catch (error) {
-            console.error('Save error:', error);
-
-            // Показываем уведомление об ошибке
-            showPerformersNotification(`Ошибка: ${error.message}`, 'danger');
-
-            // Восстанавливаем кнопку
-            saveBtn.innerHTML = '<span>✓</span>';
-            saveBtn.disabled = false;
-
-            throw error; // Пробрасываем ошибку дальше
-        }
-
-    }
-
-    function handleSuccessUpdate(row, result, selectedFormsText, selectedFgwText, performerId, idRoleAForms, idRoleAFGW) {
-        // 1. Обновление оригинальных данных
-        originalData.set(performerId, {
-            formsValue: idRoleAForms.toString(),
-            fgwValue: idRoleAFGW.toString(),
-            formsText: selectedFormsText,
-            fgwText: selectedFgwText
+        // Переключаем видимость элементов
+        viewModeElements.forEach(el => {
+            el.style.display = isEditMode ? 'none' : 'table-cell';
         });
 
-        // 2. Обновляем отображение ролей
-        row.querySelector('.forms-role .badge').textContent = selectedFormsText;
-        row.querySelector('.fgw-role .badge').textContent = selectedFgwText;
+        editModeElements.forEach(el => {
+            el.style.display = isEditMode ? 'table-cell' : 'none';
+        });
 
-        // 3. Обновляем значения в select'ах
-        const formSelect = row.querySelector('.role-forms-select');
-        const fgwSelect = row.querySelector('.role-fgw-select');
+        if (editBtn) editBtn.style.display = isEditMode ? 'none' : 'block';
+        if (editButtons) editButtons.style.display = isEditMode ? 'flex' : 'none';
+    }
+
+    static getPerformerId(row) {
+        return parseInt(row.getAttribute('data-id'), 10);
+    }
+
+    static getSelects(row) {
+        const formSelect = row.querySelector(PERFORMERS_CONFIG.SELECTORS.FORM_SELECT);
+        const fgwSelect = row.querySelector(PERFORMERS_CONFIG.SELECTORS.FGW_SELECT);
+
+        // Проверяем, что элементы существуют
+        if (!formSelect || !fgwSelect) {
+            console.error('Select elements not found in row:', row);
+            return null;
+        }
+
+        return {
+            form: formSelect,
+            fgw: fgwSelect
+        };
+    }
+
+    static getSelectedOptionText(select) {
+        return select?.options[select.selectedIndex]?.text?.trim() || '';
+    }
+
+    static updateRowData(row, data) {
+        // Обновляем отображение ролей
+        const formsBadge = row.querySelector('.forms-role .badge');
+        const fgwBadge = row.querySelector('.fgw-role .badge');
         const updateAt = row.querySelector('.update-at');
         const updateBy = row.querySelector('.update-by');
 
-        if (formSelect) {
-            formSelect.value = idRoleAForms.toString();
-            // 3.1. Обновляем атрибут data-original
-            formSelect.setAttribute('data-original', idRoleAForms.toString());
+        if (formsBadge) formsBadge.textContent = data.formsText;
+        if (fgwBadge) fgwBadge.textContent = data.fgwText;
+        if (updateAt) updateAt.textContent = data.updatedAt || '';
+        if (updateBy) updateBy.textContent = data.updatedBy || '';
+
+        // Обновляем select элементы
+        const selects = this.getSelects(row);
+        if (selects && selects.form) {
+            selects.form.value = data.formsValue;
+            selects.form.setAttribute('data-original', data.formsValue);
         }
-
-        if (fgwSelect) {
-            fgwSelect.value = idRoleAFGW.toString();
-            fgwSelect.setAttribute('data-original', idRoleAFGW.toString());
+        if (selects && selects.fgw) {
+            selects.fgw.value = data.fgwValue;
+            selects.fgw.setAttribute('data-original', data.fgwValue);
         }
-
-        updateAt.textContent = result.updatedAt;
-        updateBy.textContent = result.updatedBy;
-
-        // 4. Выходим из режима редактирования
-        disablePerformersEditMode(row)
-
-        // 5. Показываем уведомление
-        showPerformersNotification(result.message || 'Изменения успешно сохранены', 'success');
-
-        // 6. Восстанавливаем кнопку сохранения
-        const saveBtn = row.querySelector('.save-btn');
-        saveBtn.innerHTML = '<span>✓</span>';
-        saveBtn.disabled = false;
     }
 
-    function showPerformersNotification(message, type) {
-        // Удаляем существующие уведомления
-        document.querySelectorAll('.alert.position-fixed').forEach(el => el.remove());
+    static setLoadingState(button, isLoading) {
+        if (!button) return;
 
-        // Создаем элемент уведомления
-        const notification = document.createElement('div');
-        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-        notification.style.cssText = `
+        if (isLoading) {
+            button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+            button.disabled = true;
+        } else {
+            this.resetSaveButton(button);
+        }
+    }
+
+    static resetSaveButton(button) {
+        if (!button) return;
+        button.innerHTML = '<span>✓</span>';
+        button.disabled = false;
+    }
+}
+
+/**
+ * Класс для работы с API исполнителей
+ */
+class PerformersAPI {
+    static async updatePerformer(data) {
+        return this._makeRequest(PERFORMERS_CONFIG.API.ENDPOINTS.UPDATE, {
+            performerId: data.performerId,
+            idRoleAForms: data.idRoleAForms,
+            idRoleAFGW: data.idRoleAFGW
+        });
+    }
+
+    static async _makeRequest(endpoint, data) {
+        const response = await fetch(`${PERFORMERS_CONFIG.API.BASE_URL}${endpoint}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            await this._handleError(response);
+        }
+
+        return await response.json();
+    }
+
+    static async _handleError(response) {
+        const contentType = response.headers.get('content-type');
+
+        if (contentType && contentType.includes('application/json')) {
+            const result = await response.json();
+            throw new Error(result.error || `HTTP ${response.status}`);
+        }
+
+        throw new Error(`HTTP ${response.status}`);
+    }
+}
+
+/**
+ * Класс для управления уведомлениями
+ */
+class PerformersNotificationManager {
+    static show(message, type = 'info') {
+        this.clear();
+
+        const notification = this._createNotificationElement(message, type);
+        document.body.appendChild(notification);
+
+        this._setupAutoDismiss(notification);
+    }
+
+    static _createNotificationElement(message, type) {
+        const element = document.createElement('div');
+        element.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        element.style.cssText = `
             top: 20px;
             right: 20px;
             z-index: 9999;
@@ -277,50 +266,287 @@ document.addEventListener('DOMContentLoaded', function () {
             max-width: 500px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         `;
-        notification.innerHTML = `
+
+        element.innerHTML = `
             <div class="d-flex align-items-center">
-                <div class="flex-grow-1">${message}</div>
-                <button type="button" class="btn-close ms-2" data-bs-dismiss="alert"></button>
+                <div class="flex-grow-1">${this._escapeHtml(message)}</div>
+                <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         `;
 
-        // Добавляем на страницу
-        document.body.appendChild(notification);
-
-        // Автоматически удаляем через 5 секунд
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.remove();
-            }
-        }, 5000);
+        return element;
     }
-});
 
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchInput');
-    const searchForm = document.getElementById('searchForm');
-    let debounceTimer;
+    static _setupAutoDismiss(element) {
+        setTimeout(() => {
+            if (element.parentNode) {
+                element.remove();
+            }
+        }, PERFORMERS_CONFIG.UI.NOTIFICATION_TIMEOUT);
+    }
 
-    // 1. Авто-поиск при вводе
-    searchInput.addEventListener('input', function(e) {
-        clearTimeout(debounceTimer);
+    static clear() {
+        document.querySelectorAll('.alert.position-fixed').forEach(el => el.remove());
+    }
 
-        // 2. Если поле очищено - сразу отправляем
-        if (e.target.value === '') {
-            searchForm.submit();
+    static _escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+}
+
+/**
+ * Класс для управления поиском с debounce
+ */
+class SearchManager {
+    constructor() {
+        this.debounceTimer = null;
+        this.searchInput = document.querySelector(PERFORMERS_CONFIG.SELECTORS.SEARCH_INPUT);
+        this.searchForm = document.querySelector(PERFORMERS_CONFIG.SELECTORS.SEARCH_FORM);
+
+        this.init();
+    }
+
+    init() {
+        if (!this.searchInput || !this.searchForm) return;
+
+        this.searchInput.addEventListener('input', this.handleInput.bind(this));
+        this.focusSearchInput();
+    }
+
+    handleInput(event) {
+        clearTimeout(this.debounceTimer);
+
+        if (event.target.value === '') {
+            this.searchForm.submit();
             return;
         }
 
-        // 3. Ждем 800ms после последнего ввода
-        debounceTimer = setTimeout(() => {
-            searchForm.submit();
-        }, 800);
-    });
+        this.debounceTimer = setTimeout(() => {
+            this.searchForm.submit();
+        }, PERFORMERS_CONFIG.UI.DEBOUNCE_DELAY);
+    }
 
-    // 4. Фокус на поле поиска если есть поисковый запрос
-    if (searchInput.value) {
-        searchInput.focus();
-        // 5. Помещаем курсор в конец
-        searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+    focusSearchInput() {
+        if (this.searchInput && this.searchInput.value) {
+            this.searchInput.focus();
+            const length = this.searchInput.value.length;
+            this.searchInput.setSelectionRange(length, length);
+        }
+    }
+
+    cleanup() {
+        clearTimeout(this.debounceTimer);
+    }
+}
+
+/**
+ * Класс для валидации данных исполнителей
+ */
+class PerformersValidator {
+    static validateEditForm(idRoleAForms, idRoleAFGW) {
+        const errors = [];
+
+        if (!idRoleAForms || idRoleAForms <= 0) {
+            errors.push('Необходимо выбрать роль для форм');
+        }
+
+        if (!idRoleAFGW || idRoleAFGW <= 0) {
+            errors.push('Необходимо выбрать роль для ФГВ');
+        }
+
+        return {
+            isValid: errors.length === 0,
+            errors
+        };
+    }
+}
+
+/**
+ * Главный класс управления исполнителями
+ */
+class PerformersManager {
+    constructor() {
+        this.stateManager = new PerformersStateManager();
+        this.searchManager = null;
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        document.addEventListener('click', this.handleClick.bind(this));
+    }
+
+    handleClick(event) {
+        // Редактирование
+        if (event.target.closest(PERFORMERS_CONFIG.SELECTORS.EDIT_BTN)) {
+            const btn = event.target.closest(PERFORMERS_CONFIG.SELECTORS.EDIT_BTN);
+            const row = btn.closest(PERFORMERS_CONFIG.SELECTORS.PERFORMER_ROW);
+            if (row) {
+                this.handleEditClick(row);
+            }
+        }
+
+        // Отмена редактирования
+        else if (event.target.closest(PERFORMERS_CONFIG.SELECTORS.CANCEL_BTN)) {
+            const btn = event.target.closest(PERFORMERS_CONFIG.SELECTORS.CANCEL_BTN);
+            const row = btn.closest(PERFORMERS_CONFIG.SELECTORS.PERFORMER_ROW);
+            if (row) {
+                this.handleCancelClick(row);
+            }
+        }
+
+        // Сохранение
+        else if (event.target.closest(PERFORMERS_CONFIG.SELECTORS.SAVE_BTN)) {
+            const btn = event.target.closest(PERFORMERS_CONFIG.SELECTORS.SAVE_BTN);
+            const row = btn.closest(PERFORMERS_CONFIG.SELECTORS.PERFORMER_ROW);
+            if (row) {
+                this.handleSaveClick(row);
+            }
+        }
+    }
+
+    handleEditClick(row) {
+        if (!row) {
+            console.error('Row is null in handleEditClick');
+            return;
+        }
+
+        const performerId = PerformerRowManager.getPerformerId(row);
+
+        // Если оригинальные данные не сохранены - сохраняем их
+        if (!this.stateManager.hasOriginal(performerId)) {
+            const selects = PerformerRowManager.getSelects(row);
+            if (!selects) return;
+
+            const originalData = {
+                formsValue: selects.form.getAttribute('data-original') || selects.form.value,
+                fgwValue: selects.fgw.getAttribute('data-original') || selects.fgw.value,
+                formsText: PerformerRowManager.getSelectedOptionText(selects.form),
+                fgwText: PerformerRowManager.getSelectedOptionText(selects.fgw)
+            };
+            this.stateManager.saveOriginal(performerId, originalData);
+        }
+
+        const originalData = this.stateManager.getOriginal(performerId);
+        if (originalData) {
+            PerformerRowManager.enableEditMode(row, originalData);
+        }
+    }
+
+    handleCancelClick(row) {
+        if (!row) return;
+        PerformerRowManager.disableEditMode(row);
+        this.stateManager.clearTemporaryData(row);
+    }
+
+    async handleSaveClick(row) {
+        if (!row) return;
+
+        const saveBtn = row.querySelector(PERFORMERS_CONFIG.SELECTORS.SAVE_BTN);
+        if (!saveBtn) return;
+
+        // Предотвращение двойных кликов
+        if (saveBtn.disabled) return;
+
+        PerformerRowManager.setLoadingState(saveBtn, true);
+
+        try {
+            const performerId = PerformerRowManager.getPerformerId(row);
+            const selects = PerformerRowManager.getSelects(row);
+            if (!selects) return;
+
+            // Получаем значения
+            const idRoleAForms = parseInt(selects.form.value, 10);
+            const idRoleAFGW = parseInt(selects.fgw.value, 10);
+            const formsText = PerformerRowManager.getSelectedOptionText(selects.form);
+            const fgwText = PerformerRowManager.getSelectedOptionText(selects.fgw);
+
+            // Валидация
+            const validation = PerformersValidator.validateEditForm(idRoleAForms, idRoleAFGW);
+            if (!validation.isValid) {
+                validation.errors.forEach(error => {
+                    PerformersNotificationManager.show(error, 'warning');
+                });
+                return;
+            }
+
+            // Отправка на сервер
+            const result = await PerformersAPI.updatePerformer({
+                performerId,
+                idRoleAForms,
+                idRoleAFGW
+            });
+
+            // Обработка успешного ответа
+            this.handleUpdateSuccess(row, result, performerId, {
+                formsValue: idRoleAForms.toString(),
+                fgwValue: idRoleAFGW.toString(),
+                formsText,
+                fgwText,
+                updatedAt: result.updatedAt,
+                updatedBy: result.updatedBy
+            });
+
+        } catch (error) {
+            console.error('Save error:', error);
+            PerformersNotificationManager.show(`${PERFORMERS_CONFIG.MESSAGES.SAVE_ERROR}: ${error.message}`, 'danger');
+            PerformerRowManager.resetSaveButton(saveBtn);
+            throw error;
+        }
+    }
+
+    handleUpdateSuccess(row, result, performerId, data) {
+        // Обновляем оригинальные данные
+        this.stateManager.updateOriginal(performerId, {
+            formsValue: data.formsValue,
+            fgwValue: data.fgwValue,
+            formsText: data.formsText,
+            fgwText: data.fgwText
+        });
+
+        // Обновляем UI
+        PerformerRowManager.updateRowData(row, data);
+
+        // Выходим из режима редактирования
+        PerformerRowManager.disableEditMode(row);
+        this.stateManager.clearTemporaryData(row);
+
+        // Восстанавливаем кнопку
+        const saveBtn = row.querySelector(PERFORMERS_CONFIG.SELECTORS.SAVE_BTN);
+        PerformerRowManager.resetSaveButton(saveBtn);
+
+        // Уведомление
+        PerformersNotificationManager.show(
+            result.message || PERFORMERS_CONFIG.MESSAGES.SAVE_SUCCESS,
+            'success'
+        );
+    }
+
+    initSearch() {
+        this.searchManager = new SearchManager();
+    }
+
+    cleanup() {
+        if (this.searchManager) {
+            this.searchManager.cleanup();
+        }
+    }
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        window.performersManager = new PerformersManager();
+        window.performersManager.initSearch();
+
+        window.addEventListener('beforeunload', () => {
+            if (window.performersManager) {
+                window.performersManager.cleanup();
+            }
+        });
+    } catch (error) {
+        console.error('Failed to initialize PerformersManager:', error);
+        PerformersNotificationManager.show('Ошибка инициализации системы исполнителей', 'danger');
     }
 });
