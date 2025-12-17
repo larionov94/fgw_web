@@ -4,16 +4,15 @@ CREATE TABLE dbo.svTB_Production
     idProduction   INT IDENTITY (1,1)
         CONSTRAINT PK_skTB_Productuion
             PRIMARY KEY NONCLUSTERED,                         -- idProduction - ид продукции.
-    PrFolder       INT            DEFAULT 0         NOT NULL, -- PrFolder - пока поле неизвестно.
     PrName         VARCHAR(300)   DEFAULT ''        NOT NULL, -- PrName - наименование варианта упаковки продукции для упаковщика.
     PrShortName    VARCHAR(100)   DEFAULT ''        NOT NULL, -- PrShortName - короткое наименование продукции для этикетки.
     PrPackName     VARCHAR(300)   DEFAULT ''        NOT NULL, -- PrPackName - вариант упаковки.
-    PrType         VARCHAR(100)   DEFAULT ''        NOT NULL, -- PrType - декларированная или нет.
+    PrType         VARCHAR(100)   DEFAULT ''        NULL,     -- PrType - декларированная или нет.
     PrArticle      VARCHAR(5)     DEFAULT ''        NOT NULL  -- PrArticle - артикул варианта упаковки.
         CONSTRAINT IX_svTB_Production
             UNIQUE,
     PrColor        VARCHAR(20)    DEFAULT ''        NOT NULL, -- PrColor - цвет продукции.
-    PrBarCode      VARCHAR(13)    DEFAULT ''        NOT NULL, -- PrBarCode - бар-код.
+    PrBarCode      VARCHAR(13)    DEFAULT ''        NULL,     -- PrBarCode - бар-код.
     PrCount        INT            DEFAULT 0         NOT NULL, -- PrCount - количество продукции в ряду.
     PrRows         INT            DEFAULT 0         NOT NULL, -- PrRows - количество рядов.
     PrWeight       DECIMAL(19, 3) DEFAULT 0         NOT NULL, -- PrWeight - вес п\п (кг).
@@ -21,7 +20,7 @@ CREATE TABLE dbo.svTB_Production
     PrInfo         VARCHAR(1024),                             -- PrInfo - информация о продукции\комментарий.
     PrStatus       BIT            DEFAULT 1         NOT NULL, -- PrStatus - статус продукции.
     PrEditDate     DATETIME       DEFAULT GETDATE(),          -- PrEditDate - дата и время изменения записи.
-    PrEditUser     INT            DEFAULT 1,                  -- PrEditUser - роль сотрудника. По умолчанию 1 - администратор.
+    PrEditUser     INT            DEFAULT 1,                  -- PrEditUser - роль сотрудника. По умолчанию 1 - администратор, 5 - оператор.
     PrPart         INT            DEFAULT 0         NOT NULL, -- PrPart - номер текущей партии, номер партии и дата указываются вручную и не будут изменяться автоматически с течением времени.
     PrPartLastDate DATETIME       DEFAULT GETDATE() NOT NULL, -- PrPartLastDate - дата выпуска партии.
     PrPartAutoInc  SMALLINT       DEFAULT 1         NOT NULL, -- PrPartAutoInc - нумерация партии и даты! Ручная(0), Автоматическая(1), С указанной даты(2).
@@ -37,6 +36,8 @@ CREATE TABLE dbo.svTB_Production
     PrGL           SMALLINT       DEFAULT 0         NOT NULL, -- PrGL - петля Мёбиуса.
     PrVP           SMALLINT       DEFAULT 0         NOT NULL, -- PrVP - ванная печь.
     PrML           SMALLINT       DEFAULT 0         NOT NULL, -- PrML - машинная линия на печи.
-    performerid    INT            DEFAULT 0         NOT NULL, -- performerid - изначально 0 это робот делает, теперь робота не будет.
-    dtact          DATETIME       DEFAULT GETDATE() NOT NULL  -- dtact - дата актуальная для создания записи.
+    Created_at     DATETIME       DEFAULT GETDATE(),          -- Created_at - дата создания записи.
+    Created_by     INT            DEFAULT 0         NOT NULL, -- Created_by - табельный номер сотрудника.
+    Updated_at     DATETIME       DEFAULT GETDATE(),          -- Updated_at - дата изменения записи.
+    Updated_by     INT            DEFAULT 0         NOT NULL, -- Updated_by - табельный номер сотрудника изменивший запись.
 );
